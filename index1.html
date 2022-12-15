@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link rel="stylesheet" href="css/bootstrap.css">
+        <script src="js/bootstrap.js"></script>
+
+        <meta charset="UTF-8">
+        <title>Face Studio</title>
+    </head>
+    <body>
+        <div class="container" style="height: 100vh">
+            <div class="row">
+                <div class="collapse collapse-horizontal" id="collapse" style="min-height: 120px; max-width: 350px">
+                    <div class="col-11">
+                        <div class="accordion" style="height: 100vh; display: flex; flex-flow: column nowrap;">
+                            <div class="accordion-item" style="flex-grow: 1">
+                                <div class="accordion-header" id="menu1">
+                                    <button class="accordion-button" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#menu1-body"
+                                            aria-expanded="true" aria-controls="menu1-body">
+                                        Controls
+                                    </button>
+                                </div>
+                                <div id="menu1-body" class="accordion-collapse collapse show" aria-labelledby="menu1">
+                                    <div class="accordion-body">
+                                        <div class="card mb-3" style="max-width: 540px;">
+                                            <div class="row g-0">
+                                                <div class="card-body">
+                                                    <h5 class="card-title">3d Viewer</h5>
+                                                    <ul class="list-group list-group-flush">
+                                                        <li class="list-group-item">
+                                                            <span>Left-mouse to rotate.</span>
+                                                        </li>
+                                                        <li class="list-group-item">
+                                                            <span>Scroll to move in-out.</span>
+                                                        </li>
+                                                        <li class="list-group-item">
+                                                            <span>Right-mouse to move.</span>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card mb-3" style="max-width: 540px;">
+                                            <div class="row g-0">
+                                                <div class="card-body">
+                                                    <h5 class="card-title">Face Studio</h5>
+                                                    <ul class="list-group list-group-flush">
+                                                        <li class="list-group-item">
+                                                            <span>Play with the drawing board. <button id="toggleCanvas" class="btn btn-warning">Change</button></span>
+                                                        </li>
+                                                        <li class="list-group-item">
+                                                            <label for="frontImageInput" class="form-label">Front Image</label>
+                                                            <div class="input-group mb-3">
+                                                                <input class="form-control" type="file" id="frontImageInput" accept="image/png">
+                                                                <button class="btn btn-danger" type="button" id="btnFrontSideImage" disabled>Process</button>
+                                                            </div>
+                                                        </li>
+                                                        <li class="list-group-item">
+                                                            <label for="leftSideImageInput" class="form-label">Left Side Image</label>
+                                                            <div class="input-group mb-3">
+                                                                <input class="form-control" type="file" id="leftSideImageInput" accept="image/png">
+                                                                <button class="btn btn-danger" type="button" id="btnLeftSideImage" disabled>Process</button>
+                                                            </div>
+                                                        </li>
+                                                        <li class="list-group-item">
+                                                            <label for="rightSideImageInput" class="form-label">Right Side Image</label>
+                                                            <div class="input-group mb-3">
+                                                                <input class="form-control" type="file" id="rightSideImageInput" accept="image/png">
+                                                                <button class="btn btn-danger" type="button" id="btnRightSideImage" disabled>Process</button>
+                                                            </div>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <div class="accordion-header" id="menu2">
+                                    <button class="accordion-button collapsed" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#menu2-body"
+                                            aria-expanded="false" aria-controls="menu2-body">
+                                        Credits
+                                    </button>
+                                </div>
+                                <div id="menu2-body" class="accordion-collapse collapse" aria-labelledby="menu2">
+                                    <div class="accordion-body">
+                                        <div class="card mb-3" style="max-width: 540px;">
+                                            <div class="row g-0">
+                                                <div class="card-body">
+                                                    <h5 class="card-title">Hanga7yr</h5>
+                                                    <ul class="list-group list-group-flush">
+                                                        <li class="list-group-item">
+                                                            <span>Made using <a href="https://threejs.org/" target="_blank" class="card-link">Three.js</a> as a means to learn how to use it.</span>
+                                                        </li>
+                                                        <li class="list-group-item">
+                                                            <span>Heavy use of <a href="https://getbootstrap.com/" target="_blank" class="card-link">Bootstrap</a> for the interface.</span>
+                                                        </li>
+                                                        <li class="list-group-item">
+                                                            <span>Custom canvas figure drawing classes (used most of the time on this)</span>
+                                                        </li>
+                                                    </ul>
+                                                    <ul class="list-group list-group-flush">
+                                                        <li class="list-group-item"><a href="https://www.reddit.com/user/hanga7yr" class="card-link" target="_blank">Reddit</a></li>
+                                                        <li class="list-group-item"><a href="https://github.com/Hanga7yr" class="card-link" target="_blank">Github</a></li>
+                                                        <li class="list-group-item">Discord (<span class="text-decoration-underline">Hangatyr#7060</span>)</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card mb-3" style="max-width: 540px;">
+                                            <div class="row g-0">
+                                                <div class="card-body">
+                                                    <h5 class="card-title">MikeMoore</h5>
+                                                    <ul class="list-group list-group-flush">
+                                                        <li class="list-group-item">
+                                                            <a href="https://skfb.ly/ouzsK" class="card-link" target="_blank">Base Male Head</a> <span>as is</span>
+                                                        </li>
+                                                        <li class="list-group-item">
+                                                            <a href="http://creativecommons.org/licenses/by/4.0/" class="card-link" target="_blank">Licensed under Creative Commons Attribution</a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="h-100 d-flex justify-content-end" style="height: 100vh">
+                    <button id="btnShow" class="btn btn-primary d-none me-1">+</button>
+                    <button id="btnHide" class="btn btn-primary me-1">-</button>
+                    <div id="containerContainers" class="d-flex flex-wrap w-100 justify-content-end">
+                        <div id="container" style="height: 100vh; width: 100%"></div>
+                        <div id="canvasContainer" class="position-relative d-flex justify-content-center d-none border border-dark" style="height: 100vh; width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+        <script type="importmap">
+          {
+            "imports": {
+              "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
+              "three/addons/": "https://unpkg.com/three@0.147.0/examples/jsm/"
+            }
+          }
+        </script>
+        <script type="module" src="/js/app/App.js"></script>
+
+        <script type="module">
+            import { CanvasHelper } from "/js/app/CanvasHelper.js";
+
+            var canvasContainer = document.getElementById("canvasContainer");
+            // var layer1Canvas = document.getElementById("layer1");
+            // var layer2Canvas = document.getElementById("layer2");
+            // var layers = [layer1Canvas.getContext("2d"), layer2Canvas.getContext("2d")];
+            // var scalingFactor = [layer1Canvas.width/layer1Canvas.height, layer1Canvas.height/layer1Canvas.width];
+            // debugger;
+            //
+            // var leftSizeImage = new Image();
+            // leftSizeImage.src = "leftSide1.png";
+            // leftSizeImage.onload = function() {
+            //     layers[0].drawImage(leftSizeImage, 0, 0, scalingFactor[1]*leftSizeImage.width, layer1Canvas.height);
+            //     layers[1].fillRect(0, 0, layer1Canvas.width, layer1Canvas.height);
+            //
+            //     layers[1].clearRect(0, 0, 50, 50);
+            //
+            // };
+            const canvasHelper = new CanvasHelper(canvasContainer);
+            const collapseElement = document.getElementById("collapse");
+            for(const child of collapseElement.childNodes) {
+                child.addEventListener('show.bs.collapse', function(event) {
+                    event.stopPropagation();
+                });
+                child.addEventListener('hidden.bs.collapse', function(event) {
+                    event.stopPropagation();
+                });
+            }
+            for(const child of collapseElement.getElementsByClassName("collapse")) {
+                    child.addEventListener('show.bs.collapse', function(event) {
+                        for(const child of collapseElement.getElementsByClassName("collapse")) child.parentElement.style.flexGrow = 0;
+                        for(const child of collapseElement.getElementsByClassName("collapse")) if(child != this) bootstrap.Collapse.getOrCreateInstance(child).hide();
+                        this.parentElement.style.flexGrow = 1;
+                        event.stopPropagation();
+                    });
+                    child.addEventListener('hidden.bs.collapse', function(event) {
+                        this.parentElement.style.flexGrow = 0;
+                        event.stopPropagation();
+                    });
+                    // bootstrap.Collapse.getOrCreateInstance(child).hide();
+            };
+            // bootstrap.Collapse.getOrCreateInstance(collapseElement.getElementsByClassName("collapse show")[0]).show();
+            collapseElement.addEventListener('show.bs.collapse', function(event) {
+                const container = document.getElementById('container');
+                container.parentElement.parentElement.style.width = (container.parentElement.parentElement.clientWidth - parseInt(collapseElement.style.maxWidth.replace("px", ""))) + "px";
+                container.resize();
+                canvasHelper.UpdateLayers();
+            });
+            console.log(collapseElement.clientWidth);
+
+            collapseElement.addEventListener('hidden.bs.collapse', function(event) {
+                const container = document.getElementById('container');
+                container.parentElement.parentElement.style.width = (container.parentElement.parentElement.clientWidth + parseInt(collapseElement.style.maxWidth.replace("px", ""))) + "px";
+                container.resize();
+                canvasHelper.UpdateLayers();
+            });
+            document.getElementById("btnHide").addEventListener('click', function(event) {
+                bootstrap.Collapse.getOrCreateInstance(collapseElement).hide();
+                document.getElementById("btnShow").classList.remove("d-none");
+                document.getElementById("btnHide").classList.add("d-none");
+            });
+            document.getElementById("btnShow").addEventListener('click', function(event) {
+                bootstrap.Collapse.getOrCreateInstance(collapseElement).show();
+                document.getElementById("btnShow").classList.add("d-none");
+                document.getElementById("btnHide").classList.remove("d-none");
+            });
+            document.getElementById("toggleCanvas").addEventListener("click", function (event) {
+                var hidden = null;
+                var shown = null;
+                for(const child of document.getElementById("containerContainers").children){
+                    if(child.classList.contains("d-none")) hidden = child;
+                }
+                for(const child of document.getElementById("containerContainers").children){
+                    if(!child.classList.contains("d-none")) shown = child;
+                }
+
+                hidden.classList.remove("d-none");
+                shown.classList.add("d-none");
+
+                canvasHelper.UpdateLayers();
+                document.getElementById('container').resize();
+            });
+
+            function handleFileInput(event) {
+                const btn = this.nextElementSibling;
+                btn.attributes.removeNamedItem("disabled");
+                btn.classList.remove("btn-danger");
+                btn.classList.add("btn-outline-success");
+            }
+
+            function handleFileInputBtn(event) {
+                document.getElementById("toggleCanvas").dispatchEvent(new Event('click'));
+                createImageBitmap(this.previousElementSibling.files[0]).then(function(fileImageBitmap) {
+                    canvasHelper.GetDrawingLayer().drawImage(fileImageBitmap, 0, 0);
+                });
+            }
+
+            document.getElementById("frontImageInput").addEventListener('input', handleFileInput);
+            document.getElementById("btnFrontSideImage").addEventListener("click", handleFileInputBtn);
+            document.getElementById("leftSideImageInput").addEventListener('input', handleFileInput);
+            document.getElementById("btnLeftSideImage").addEventListener("click", handleFileInputBtn);
+            document.getElementById("rightSideImageInput").addEventListener('input', handleFileInput);
+            document.getElementById("btnRightSideImage").addEventListener("click", handleFileInputBtn);
+        </script>
+
+        <script type="module">
+            import * as THREE from 'three';
+            import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+            import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+            import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+            const container = document.getElementById('container');
+            container.resize = function(event) {
+                var box = container.getBoundingClientRect();
+                renderer.setSize(box.width, box.height);
+
+                camera.aspect = box.width/box.height
+                camera.updateProjectionMatrix();
+            };
+
+            const scene = new THREE.Scene();
+            const renderer = new THREE.WebGLRenderer();
+            const camera = new THREE.PerspectiveCamera( 75, container.clientWidth / container.clientHeight, 0.1, 100);
+
+            scene.add(camera);
+
+            // Create and add to the screen
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            container.appendChild( renderer.domElement );
+
+            // This part takes care of moving the camera with the mouse
+            // Just drop and work
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.target.set(0, 0, 0);
+            controls.update();
+            controls.enablePan = true;
+            controls.enableDamping = true;
+
+            camera.position.set(0, 0, 0.5);
+
+            const light2  = new THREE.DirectionalLight(0x999999, 0.8 * Math.PI);
+            light2.position.set(0.5, 0, 0.866); // ~60º
+            light2.name = 'main_light';
+            camera.add(light2);
+
+            // Texture
+            let textureLoader = new THREE.TextureLoader();
+
+            // Load the head
+            const dracoLoader = new DRACOLoader();
+            dracoLoader.setDecoderPath( 'js/draco/' );
+
+            const loader = new GLTFLoader();
+            loader.setDRACOLoader(dracoLoader);
+            loader.load(
+                './BaseMaleHead/base_male_head.glb',
+                function (gltf) {
+                    const loadedScene = gltf.scene || gltf.scenes[0];
+
+
+                    const box = new THREE.Box3().setFromObject(loadedScene);
+                    const size = box.getSize(new THREE.Vector3()).length();
+                    const center = box.getCenter(new THREE.Vector3());
+
+                    loadedScene.position.x += (loadedScene.position.x - center.x);
+                    loadedScene.position.y += (loadedScene.position.y - center.y);
+                    loadedScene.position.z += (loadedScene.position.z - center.z);
+
+                    scene.add(loadedScene);
+
+                    const headModel = loadedScene.children[0].children[0].children[0].children[0];
+                    const headTexture = textureLoader.load('uvmapping2.png');
+                    headModel.children[0].material.emissiveIntensity = 0.25;
+                    headModel.children[0].material.map = headTexture;
+                },
+                function (xhr) {
+                    console.log(( xhr.loaded / xhr.total * 100 ) + '% loaded');
+                },
+                function (error) {
+                    console.log('An error happened');
+                }
+            );
+
+            function animate() {
+                requestAnimationFrame( animate );
+                controls.update();
+                renderer.render( scene, camera );
+            }
+            animate();
+        </script>
+    </body>
+</html>

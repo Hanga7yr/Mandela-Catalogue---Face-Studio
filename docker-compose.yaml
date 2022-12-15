@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  mandela-catalogue-face-studio:
+    build:
+      context: .
+      dockerfile: apache.Dockerfile
+    image: apache:testing
+    container_name: mandela-catalogue-face-studio
+    volumes:
+      - ./:/var/www/html
+    ports:
+      - "80:80"
+    tty: true
+    cap_add:
+      - SYS_NICE
+    sysctls:
+      - net.ipv4.ip_unprivileged_port_start=0

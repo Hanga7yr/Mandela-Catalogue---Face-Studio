@@ -3,7 +3,7 @@ services:
   mandela-catalogue-face-studio:
     build:
       context: .
-      dockerfile: apache.Dockerfile
+      dockerfile: php.Dockerfile
     image: apache:testing
     container_name: mandela-catalogue-face-studio
     volumes:

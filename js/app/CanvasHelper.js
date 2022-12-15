@@ -1,148 +1,94 @@
-import { CanvasPatternHelper } from '/js/app/CanvasPatternHelper.js';
-
 export class CanvasHelper {
-    parentElement;
+
+    /**
+     * Used when generating layers to mark the amount of layers made.
+     * @type {Number}
+     */
+    currentLayerCount;
+
+    /**
+     * An array containing all the context for the canvas layers.
+     * @type {CanvasRenderingContext2D[]}
+     */
     layers = [];
-    canvas = [];
 
-    mouseDown = false;
-    mouseUp = false;
+    /**
+     * The container where all the layers are stored.
+     * @type {HTMLElement}
+     */
+    parentElement;
 
-    mouseMoving = true;
+    /**
+     * Stores the current state of the events.
+     * @type {number[]}
+     */
+    eventState;
 
-    mouseEnter = false;
-    mouseLeave = false;
+    Generate() {
 
-    patternHelper;
-    patternHelperAux;
+        this.onGenerateLayers.forEach((eventHandler) => {
+            const newLayer = eventHandler(this.currentLayerCount);
+            if(newLayer) this.layers.push(newLayer);
+        });
 
-    static LAYER_STORING = 0;
-    static LAYER_DRAWING = 1;
-    static LAYER_TEMP = 2;
-    static LAYER_EVENTS = 3;
-
-    constructor(parentElement) {
-        this.parentElement = parentElement;
-
-        // parentElement.classList.add("w-100");
-        parentElement.classList.add("position-relative");
-        parentElement.classList.add("d-flex");
-        parentElement.classList.add("justify-content-center");
-
-        this.AddLayer(1); // StoringLayer
-        this.AddLayer(2); // DrawingLayer
-        this.AddLayer(3); // TempLayer
-        this.AddLayer(4); // EventHandlingLayer
-
-        const eventLayer = this.GetEventLayer();
-        eventLayer.fillStyle = "rgb(255, 0, 0)";
-        eventLayer.fillRect(
-            eventLayer.canvas.width/2, eventLayer.canvas.height/2,
-            5, 5
-        );
-
-        this.mouseMovingTimeout = setTimeout(this.CheckMouseMoving.bind(this), 100);
-
-        this.patternHelper = new CanvasPatternHelper();
-        this.patternHelper.isInteractive = true;
-        this.patternHelper.shouldDraw = true;
-        this.patternHelper.SetActiveLayer(this.GetDrawingLayer());
-        this.patternHelper.SetBufferLayer(this.GetTempLayer());
-
-        this.AddOnMouseMoveFromKeyDown(this.patternHelper.onMouseDownHandler.bind(this.patternHelper));
-        this.AddOnMouseUp(this.patternHelper.onMouseUpHandler.bind(this.patternHelper));
-
-        this.patternHelper.drawingPattern = CanvasPatternHelper.PATTERN_NONE;
-        this.patternHelper.drawingMode = CanvasPatternHelper.MODE_NONE;
-        this.patternHelper.drawingPathMode = CanvasPatternHelper.PATH_NONE;
-        this.patternHelper.fillStyle = "rgb(255, 0, 0)";
-
-        this.patternHelperAux = new CanvasPatternHelper();
-        this.patternHelperAux.isInteractive = true;
-        this.patternHelperAux.isAllowedPermanent = false;
-        this.patternHelperAux.shouldCleanOnDraw = false;
-        this.patternHelperAux.shouldDraw = false;
-        this.patternHelperAux.SetActiveLayer(this.GetDrawingLayer());
-        this.patternHelperAux.SetBufferLayer(this.GetTempLayer());
-
-        this.AddOnMouseMoveFromKeyDown(this.patternHelperAux.onMouseDownHandler.bind(this.patternHelperAux));
-        this.AddOnMouseUp(this.patternHelperAux.onMouseUpHandler.bind(this.patternHelperAux));
-
-        this.patternHelperAux.drawingPattern = CanvasPatternHelper.PATTERN_RECT;
-        this.patternHelperAux.drawingMode = CanvasPatternHelper.MODE_STROKE;
-        this.patternHelperAux.drawingPathMode = CanvasPatternHelper.PATH_VERTEX;
+        this.layers.forEach((layer) => {
+            layer?.addEventListener('mousemove', this.OnMouseMove.bind(this));
+            layer?.addEventListener('mouseup', this.OnMouseUp.bind(this));
+            layer?.addEventListener('mousedown', this.OnMouseDown.bind(this));
+            layer?.addEventListener('mouseenter', this.OnMouseEnter.bind(this));
+            layer?.addEventListener('mouseleave', this.OnMouseLeave.bind(this));
+        });
     }
 
-    GetDrawingLayer() { return this.layers[CanvasHelper.LAYER_DRAWING]; }
-    GetStoringLayer() { return this.layers[CanvasHelper.LAYER_STORING]; }
-    GetTempLayer()    { return this.layers[CanvasHelper.LAYER_TEMP];    }
-    GetEventLayer()   { return this.layers[CanvasHelper.LAYER_EVENTS];  }
+    /**
+     * EventHandlers on the state where the canvas needs to update.
+     * It accepts either a list of layers to update or null, in which case it will update all.
+     * @param {CanvasRenderingContext2D[]|number|null} layer The layer or layers to update. Starts at 1.
+     */
+    UpdateLayers(layers) {
+        /** @type {CanvasRenderingContext2D[]} */
+        let layersToUpdate = [];
 
-    GetDrawingCanvas() { return this.canvas[CanvasHelper.LAYER_DRAWING]; }
-    GetStoringCanvas() { return this.canvas[CanvasHelper.LAYER_STORING]; }
-    GetTempCanvas()    { return this.canvas[CanvasHelper.LAYER_TEMP];    }
-    GetEventCanvas()   { return this.canvas[CanvasHelper.LAYER_EVENTS];  }
-
-    UpdateLayers() {
-        for(const layer of this.layers) {
-            layer.canvas.setAttribute("width", this.parentElement.clientWidth);
-            layer.canvas.setAttribute("height", this.parentElement.clientHeight);
-        }
-    }
-
-    AddLayer(zIndex) {
-        const newCanvas = document.createElement("canvas");
-        this.parentElement.appendChild(newCanvas);
-
-        newCanvas.classList.add("position-absolute");
-        newCanvas.classList.add("h-100");
-        newCanvas.style.zIndex = zIndex;
-        newCanvas.setAttribute("width", this.parentElement.clientWidth);
-        newCanvas.setAttribute("height", this.parentElement.clientHeight);
-
-        this.layers.push(newCanvas.getContext("2d"));
-        this.canvas.push(newCanvas);
-        this.SetEventOnTopCanvas();
-
-        return newCanvas;
-    }
-
-    AddEvents(canvas) {
-        canvas?.addEventListener('mousemove', this.OnMouseMove.bind(this));
-        canvas?.addEventListener('mouseup', this.OnMouseUp.bind(this));
-        canvas?.addEventListener('mousedown', this.OnMouseDown.bind(this));
-        canvas?.addEventListener('mouseenter', this.OnMouseEnter.bind(this));
-        canvas?.addEventListener('mouseleave', this.OnMouseLeave.bind(this));
-    }
-
-    RemoveEvents(canvas) {
-        canvas?.removeEventListener('mousemove', this.OnMouseMove);
-        canvas?.removeEventListener('mouseup', this.OnMouseUp);
-        canvas?.removeEventListener('mousedown', this.OnMouseDown);
-        canvas?.removeEventListener('mouseenter', this.OnMouseEnter);
-        canvas?.removeEventListener('mouseleave', this.OnMouseLeave);
-    }
-
-    SetEventOnTopCanvas() {
-        for (const canvas of this.canvas) {
-            this.RemoveEvents(canvas);
+        if(layers) {
+            if(layers instanceof Number) {
+                if(this.layers.length < layers) {
+                    layersToUpdate.push(this.layers[layers - 1]);
+                }
+            } else if(layers instanceof Array) {
+                if(layers.every((layer) => layer instanceof CanvasRenderingContext2D))
+                    layersToUpdate = this.layers
+                        .filter((layer) => layers.includes(layer));
+            }
         }
 
-        this.AddEvents(this.canvas[CanvasHelper.LAYER_EVENTS]);
+        layersToUpdate
+            .forEach((layer) => {
+                layer.canvas.setAttribute("width", this.parentElement.clientWidth.toString());
+                layer.canvas.setAttribute("height", this.parentElement.clientHeight.toString());
+            })
     }
 
+
+    /** Event and EventHandlers Section DONOTENTER XD */
+
+    static MOUSE_LEAVE = 0;
+    static MOUSE_ENTER = 1;
+    static MOUSE_UP = 2;
+    static MOUSE_DOWN = 3;
+    static MOUSE_MOVE = 4;
+
+    CheckMouseMoving() {
+        this.mouseMoving = false;
+        clearTimeout(this.mouseMovingTimeout);
+    }
     OnMouseMove(event) {
         console.log("Mouse Move: " + event);
         this.mouseMoving = true;
         this.mouseMovingTimeout = setTimeout(this.CheckMouseMoving, 100);
 
         if(this.mouseDown && this.mouseEnter) {
-            this?.onMouseMoveWithKeyDownHandlers?.forEach((handler) => handler?.call(this, event, this));
+            this?.onMouseDownAndMove?.forEach((handler) => handler?.call(this, event, this));
         }
-    }
-    CheckMouseMoving() {
-        this.mouseMoving = false;
-        clearTimeout(this.mouseMovingTimeout);
     }
 
     OnMouseUp(event) {
@@ -152,34 +98,141 @@ export class CanvasHelper {
 
         this?.onMouseUpHandlers.forEach((handler) => handler?.call(this, event, this));
     }
-
     OnMouseDown(event) {
         console.log("Mouse Down: " + event);
         this.mouseDown = true;
         this.mouseUp = false;
     }
-
     OnMouseEnter(event) {
         console.log("Mouse Enter: " + event);
         this.mouseEnter = true;
         this.mouseLeave = false;
     }
 
-    OnMouseLeave(event) {
-        console.log("Mouse Leave: " + event);
+    /**
+     * Calls the apropiate handlers when the onmouseleave event is called on the EventLayer.
+     * @param {MouseEvent} event The event data.
+     * @constructor
+     */
+    OnMouseLeaveListener(event) {
+        console.count("CanvasHelper#OnMouseLeaveListener");
+
         this.mouseLeave = true;
         this.mouseEnter = false;
 
+        if(this.eventState.includes(CanvasHelper.MOUSE_LEAVE))
+            this.eventState.push(CanvasHelper.MOUSE_LEAVE);
+        if(this.eventState.includes(CanvasHelper.MOUSE_ENTER))
+            this.eventState.splice(this.eventState.indexOf(CanvasHelper.MOUSE_LEAVE));
+
         this.OnMouseUp(event);
+        this.onMouseLeave.forEach(eventHandler => eventHandler(event));
     }
 
-    onMouseMoveWithKeyDownHandlers = [];
-    AddOnMouseMoveFromKeyDown(eventHandler) {
-        this.onMouseMoveWithKeyDownHandlers.push(eventHandler);
+
+    /**
+     * EventHandlers on the case the left mouse key is up.
+     * @type {Array<function(Event):void>}
+     */
+    onMouseUp;
+
+    /**
+     * EventHandlers on the case the left mouse key is down.
+     * @type {Array<function(Event):void>}
+     */
+    onMouseDown;
+
+    /**
+     * EventHandlers on the case the mouse has entered the canvas.
+     * @type {Array<function(Event):void>}
+     */
+    onMouseEnter;
+
+    /**
+     * EventHandlers on the case the mouse leaves the canvas.
+     * @type {Array<function(Event):void>}
+     */
+    onMouseLeave;
+
+    /**
+     * EventHandlers on the case the mouse is within the canvas.
+     * @type {Array<function(Event):void>}
+     */
+    onMouseMove;
+
+    /**
+     * EventHandlers on the case the leftClick is down and moving
+     * In this case, {@link CanvasHelper#onMouseMove} will be invoked regardless and {@link CanvasHelper#onMouseDown} once.
+     * @type {Array<function(Event):void>}
+     */
+    onMouseDownAndMove;
+
+    /**
+     * EventHandlers on the state where layers are being generated.
+     * @type {Array<function(number):CanvasRenderingContext2D>}
+     */
+    onGenerateLayers;
+
+    /**
+     * Adds a handler to the onGenerateLayers.
+     * @param {function(number):void} eventHandler
+     */
+    AddOnGenerateLayersHandler(eventHandler) {
+        if(!this.onGenerateLayers.includes(eventHandler))
+            this.onGenerateLayers.push(eventHandler);
     }
 
-    onMouseUpHandlers = [];
-    AddOnMouseUp(eventHandler) {
-        this.onMouseUpHandlers.push(eventHandler);
+    /**
+     * Adds a handler to the onMouseDownEvent.
+     * @param {function(Event):void} eventHandler
+     */
+    AddOnMouseDownHandler(eventHandler) {
+        if(!this.onMouseDown.includes(eventHandler))
+            this.onMouseDown.push(eventHandler);
+    }
+
+    /**
+     * Adds a handler to the onMouseUpEvent.
+     * @param {function(Event):void} eventHandler
+     */
+    AddOnMouseUpHandler(eventHandler) {
+        if(!this.onMouseUp.includes(eventHandler))
+            this.onMouseUp.push(eventHandler);
+    }
+
+    /**
+     * Adds a handler to the onMouseMoveEvent.
+     * @param {function(Event):void} eventHandler
+     */
+    AddOnMouseMoveHandler(eventHandler) {
+        if(!this.onMouseMove.includes(eventHandler))
+            this.onMouseMove.push(eventHandler);
+    }
+
+    /**
+     * Adds a handler to the onMouseEnterEvent.
+     * @param {function(Event):void} eventHandler
+     */
+    AddOnMouseEnterHandler(eventHandler) {
+        if(!this.onMouseEnter.includes(eventHandler))
+            this.onMouseEnter.push(eventHandler);
+    }
+
+    /**
+     * Adds a handler to the onMouseLeaveEvent.
+     * @param {function(Event):void} eventHandler
+     */
+    AddOnMouseLeaveHandler(eventHandler) {
+        if(!this.onMouseLeave.includes(eventHandler))
+            this.onMouseLeave.push(eventHandler);
+    }
+
+    /**
+     * Adds a handler to the onMouseDownAndMoveEvent.
+     * @param {function(Event):void} eventHandler
+     */
+    AddonMouseDownAndMoveHandler(eventHandler) {
+        if(!this.onMouseDownAndMove.includes(eventHandler))
+            this.onMouseDownAndMove.push(eventHandler);
     }
 }

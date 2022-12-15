@@ -154,7 +154,7 @@
         <script type="module" src="/js/app/App.js"></script>
 
         <script type="module">
-            import { CanvasHelper } from "/js/app/CanvasHelper.js";
+            import { CanvasEventHelper } from "/js/app/CanvasEventHelper.js";
 
             var canvasContainer = document.getElementById("canvasContainer");
             // var layer1Canvas = document.getElementById("layer1");
@@ -172,7 +172,7 @@
             //     layers[1].clearRect(0, 0, 50, 50);
             //
             // };
-            const canvasHelper = new CanvasHelper(canvasContainer);
+            const canvasHelper = new CanvasEventHelper(canvasContainer);
             const collapseElement = document.getElementById("collapse");
             for(const child of collapseElement.childNodes) {
                 child.addEventListener('show.bs.collapse', function(event) {

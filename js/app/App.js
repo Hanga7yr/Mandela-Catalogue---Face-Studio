@@ -1,4 +1,4 @@
-import { CanvasHelper } from '/js/app/CanvasHelper.js';
+import { CanvasEventHelper } from '/js/app/CanvasEventHelper.js';
 import { ViewerHelper } from '/js/app/ViewerHelper.js';
 import { CanvasPatternHelper } from "/js/app/CanvasPatternHelper.js";
 
@@ -393,7 +393,7 @@ export class App {
         const ui = this.GenerateUI(this.uiConfig);
 
         const content = this.GenerateContent(this.contentConfig);
-        this.canvasHelper = new CanvasHelper(this.content.canvas.container);
+        this.canvasHelper = new CanvasEventHelper(this.content.canvas.container);
         this.viewerHelper = new ViewerHelper(this.content.viewer.element);
 
         row.appendChild(ui);

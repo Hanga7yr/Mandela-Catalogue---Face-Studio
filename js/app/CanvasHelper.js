@@ -1,5 +1,6 @@
 import { CanvasDrawingHelper } from "/js/app/CanvasDrawingHelper.js";
 import { CanvasPatternHelper } from "/js/app/CanvasPatternHelper.js";
+import { CanvasUVHelper } from "/js/app/CanvasUVHelper.js";
 
 export class CanvasHelper {
 
@@ -58,6 +59,9 @@ export class CanvasHelper {
         this.onMouseDown = [];
         this.onMouseMove = [];
         this.onGenerateLayers = [];
+        
+        const uvHelper = new CanvasUVHelper();
+        this.AddOnGenerateLayersHandler(uvHelper.GenerateLayers.bind(uvHelper));
 
         const patternHelper = new CanvasPatternHelper();
         // this.AddOnMouseDownHandler(patternHelper.OnMouseDownHandler.bind(patternHelper));
@@ -79,6 +83,7 @@ export class CanvasHelper {
         patternOutlineHelper.drawingPath = CanvasPatternHelper.PATH_VERTEX;
 
         this.helpers[CanvasDrawingHelper.TYPE_PATTERN] = patternHelper;
+        this.helpers[CanvasDrawingHelper.TYPE_IMAGE] = uvHelper;
         this.helpers[CanvasDrawingHelper.TYPE_PATTERN_OUTLINE] = patternOutlineHelper;
 
         this.mouseMovingTimeout = setTimeout(this.CheckMouseMoving.bind(this), this.mouseMovingTimeoutDelay);

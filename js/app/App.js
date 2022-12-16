@@ -1,7 +1,9 @@
 import { ViewerHelper } from '/js/app/ViewerHelper.js';
-import { CanvasPatternHelper } from "/js/app/CanvasPatternHelper.js";
 import { CanvasHelper } from "/js/app/CanvasHelper.js";
+7
 import { CanvasDrawingHelper } from "/js/app/CanvasDrawingHelper.js";
+import { CanvasPatternHelper } from "/js/app/CanvasPatternHelper.js";
+import { CanvasUVHelper } from "/js/app/CanvasUVHelper.js";
 
 export class App {
     /**
@@ -857,7 +859,7 @@ export class App {
 
             this.content.canvas.container.setAttribute("data-need-refresh", "true");
 
-            if(this.content.viewer.element.container.getAttribute("data-need-refresh") == "true") {
+            if(this.content.viewer.element.getAttribute("data-need-refresh") == "true") {
                 this.content.viewer.element.setAttribute("data-need-refresh", "true");
                 this.viewerHelper.UpdateViewer();
             }

@@ -1,5 +1,5 @@
-import { CanvasDrawingHelper } from "js/app/CanvasDrawingHelper.js";
-import {CanvasHelper} from "./CanvasHelper";
+import { CanvasDrawingHelper } from "/js/app/CanvasDrawingHelper.js";
+import { CanvasHelper } from "/js/app/CanvasHelper.js";
 
 
 export class CanvasUVHelper extends CanvasDrawingHelper {

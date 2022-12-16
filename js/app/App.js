@@ -1,15 +1,27 @@
 import { CanvasEventHelper } from '/js/app/CanvasEventHelper.js';
 import { ViewerHelper } from '/js/app/ViewerHelper.js';
 import { CanvasPatternHelper } from "/js/app/CanvasPatternHelper.js";
+import { CanvasHelper } from "/js/app/CanvasHelper.js";
+import { CanvasDrawingHelper } from "/js/app/CanvasDrawingHelper.js";
 
 export class App {
+    /**
+     * Stores the CanvasHelper object. Maybe it should be a singleton but meh.
+     * @type {CanvasHelper}
+     */
     canvasHelper;
+
+    /**
+     * Stores the ViewerHelper object.
+     * @type {ViewerHelper}
+     */
     viewerHelper;
 
+    /**
+     * The parent element of the canvas.
+     * @type {HTMLElement}
+     */
     canvasContainer = null;
-    shouldAddCanvasStyle = true;
-    canvasStyle = null;
-    canvasStyleBootstrap = null;
 
     uiConfig;
     ui;
@@ -17,6 +29,8 @@ export class App {
     contentConfig;
 
     constructor(props) {
+        this.canvasHelper = new CanvasHelper();
+
         this.uiConfig = {
             menu: {
                 items: [{
@@ -93,9 +107,29 @@ export class App {
     GetMenuHeader() { return this.ui.menu.header; }
     GetMenuItems() { return this.ui.menu.items; }
 
+    PrepareImagePreviewControl(config = {id: null, section: null, class: null, text: null, style: null, button: {id: null, section: null, text: null, click: null, class: null, style: null}}) {
+        const imagePreviewControlContainer = document.createElement("div");
+        imagePreviewControlContainer.classList.add("d-none");
+
+        const imagePreviewHeaderControl = document.createElement("h6");
+        imagePreviewHeaderControl.innerHTML = config.text;
+        imagePreviewControlContainer.appendChild(imagePreviewHeaderControl);
+
+        const imagePreviewControl = document.createElement("img");
+        imagePreviewControl.setAttribute("id", `controls-${config.section}-${config.id}-img`);
+        imagePreviewControl.setAttribute("alt", "...");
+        imagePreviewControl.classList.add("img-thumbnail");
+        if(config && config.class) config.class.forEach((styleClass) => imagePreviewControl.classList.add(styleClass));
+        if(config && config.style)
+            config.style.map((style) => Object.entries(style)).forEach(([[key, value]]) => imagePreviewControl.style.setProperty(key, value));
+
+        imagePreviewControlContainer.appendChild(imagePreviewControl);
+        if(config && config.button) imagePreviewControlContainer.appendChild(this.PrepareButtonControl(config.button));
+        return imagePreviewControlContainer;
+    }
     PrepareButtonControl(config = {id: null, section: null, text: null, class: null, style: null, click: null}) {
         const buttonControl = document.createElement("button");
-        buttonControl.setAttribute("id", `controls-${config.section}-${config.id}--btn`);
+        buttonControl.setAttribute("id", `controls-${config.section}-${config.id}-btn`);
         buttonControl.addEventListener('click', config.click);
         buttonControl.classList.add("btn");
         if(config && config.class) config.class.forEach((styleClass) => buttonControl.classList.add(styleClass));
@@ -216,7 +250,11 @@ export class App {
             class: ["mb-3"]
         };
 
+
+
         const faceStudioBodyInputsElements = [];
+        faceStudioBodyInputsElements.push(this.PrepareButtonControl({id: 'toggle-uv', section: faceStudioInputs.id, text: "Toggle UV mapping", click: null, class: ["btn-warning"], style: null}));
+
         [["front-side", "Front Side"], ["right-side", "Right Side"], ["left-side", "Left Side"]].forEach((side) => {
             faceStudioBodyInputsElements.push(this.PrepareFileInputControl({
                 section: faceStudioInputs.id,
@@ -274,6 +312,18 @@ export class App {
 
         const canvasBodyElements = [buttonsContainer];
 
+        canvasBodyElements.push(this.PrepareImagePreviewControl({
+            id: canvas.id,
+            section: "img-prev",
+            text: "Image Preview",
+            button: {
+                id: canvas.id,
+                section: "img-prev",
+                text: "As Content",
+                class: ["btn-secondary", "w-100"],
+                click: this.UIMenuItemImagePrevAsContentClickHandler.bind(this)
+            }
+        }));
         this.PrepareDrawingOptionControl({
             options: [{
                 id: "pattern",
@@ -295,6 +345,10 @@ export class App {
                     id: "ellipse",
                     text: "Ellipse",
                     disabled: ""
+                }, {
+                    id: "image",
+                    text: "Image",
+                    disabled: ""
                 }]
             }, {
                 id: "mode",
@@ -307,11 +361,11 @@ export class App {
                 }, {
                     id: "fill",
                     text: "Fill",
-                    disabled: ""
+                    disabled: "image"
                 }, {
                     id: "stroke",
                     text: "Stroke",
-                    disabled: ""
+                    disabled: "image"
                 }]
             }, {
                 id: "path",
@@ -324,15 +378,15 @@ export class App {
                 }, {
                     id: "vertex",
                     text: "Vertex",
-                    disabled: ""
+                    disabled: "image"
                 }, {
                     id: "radius",
                     text: "Radius",
-                    disabled: "ellipse"
+                    disabled: "image ellipse"
                 }, {
                     id: "dia",
                     text: "Diametre",
-                    disabled: "rect ellipse"
+                    disabled: "image rect ellipse"
                 }]
             }]
         })
@@ -393,7 +447,9 @@ export class App {
         const ui = this.GenerateUI(this.uiConfig);
 
         const content = this.GenerateContent(this.contentConfig);
-        this.canvasHelper = new CanvasEventHelper(this.content.canvas.container);
+        this.canvasHelper.SetParentElement(this.content.canvas.container);
+        this.canvasHelper.Generate();
+
         this.viewerHelper = new ViewerHelper(this.content.viewer.element);
 
         row.appendChild(ui);
@@ -427,6 +483,8 @@ export class App {
             config.style.map((style) => Object.entries(style)).forEach(([[key, value]]) => canvasContainer.style.setProperty(key, value));
 
         canvasContainer.setAttribute("data-need-refresh", "true");
+
+        this.canvasHelper.SetParentElement(canvasContainer);
 
         this.content.canvas.container = canvasContainer;
         return canvasContainer;
@@ -657,7 +715,7 @@ export class App {
             .map(menuItem => menuItem)
             .forEach(menuItem => {
                 menuItem.element.parentElement.style.flexGrow = "1"
-                menuItem.element.parentElement.style.overflowY = "scroll";
+                menuItem.element.parentElement.style.overflowY = "auto";
                 if(menuItem.control.classList.contains("collapsed")) {
                     menuItem.element.parentElement.style.flexGrow = "0";
                     menuItem.element.parentElement.style.overflowY = "visible"; // When hidden
@@ -672,7 +730,7 @@ export class App {
                 bootstrap.Collapse.getOrCreateInstance(menuItem.element, {toggle: false}).show();
                 if(!menuItem.control.classList.contains("collapsed")) {
                     menuItem.element.parentElement.style.flexGrow = "1";
-                    menuItem.element.parentElement.style.overflowY = "scroll";
+                    menuItem.element.parentElement.style.overflowY = "auto";
                 }
             });
     }
@@ -684,23 +742,43 @@ export class App {
     }
     UIMenuItemFileInputClickHandler(e) {
         document.getElementById("menu-item-section-body-canvas").scrollIntoView(true);
+
+        createImageBitmap(e.target.previousElementSibling.files[0])
+            .then((fileImageBitmap) => {
+                document.getElementById("controls-img-prev-canvas-img").src = URL.createObjectURL(e.target.previousElementSibling.files[0]);
+
+                this.ui.menu.items[0].body
+                    .filter(element => element.element.getAttribute("id").includes("canvas"))[0]
+                    .sections[0].elements[2].firstElementChild.lastElementChild
+                    .querySelector("input")
+                    .click();
+                this.ui.menu.items[0].body
+                    .filter(element => element.element.getAttribute("id").includes("canvas"))[0]
+                    .sections[0].elements[0].firstElementChild.firstElementChild.click();
+
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).image = fileImageBitmap;
+            });
+
+        // createImageBitmap(this.previousElementSibling.files[0]).then(function(fileImageBitmap) {
+        //     canvasHelper.GetDrawingLayer().drawImage(fileImageBitmap, 0, 0);
+        // });
     }
 
     UIMenuItemCanvasDrawingPathChangeHandler(e) {
         const path = e.target.getAttribute("data-drawing-path");
         switch (path) {
             case "vertex":
-                this.canvasHelper.patternHelper.drawingPathMode = CanvasPatternHelper.PATH_VERTEX;
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingPath = CanvasPatternHelper.PATH_VERTEX;
                 break;
             case "radius":
-                this.canvasHelper.patternHelper.drawingPathMode = CanvasPatternHelper.PATH_RADIUS;
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingPath = CanvasPatternHelper.PATH_RADIUS;
                 break;
             case "dia":
-                this.canvasHelper.patternHelper.drawingPathMode = CanvasPatternHelper.PATH_DIA;
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingPath = CanvasPatternHelper.PATH_DIA;
                 break;
             case "none":
             default:
-                this.canvasHelper.patternHelper.drawingPathMode = CanvasPatternHelper.PATH_NONE;
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingPath = CanvasPatternHelper.PATH_NONE;
                 break;
         }
     }
@@ -708,44 +786,58 @@ export class App {
         const mode = e.target.getAttribute("data-drawing-mode");
         switch (mode) {
             case "fill":
-                this.canvasHelper.patternHelper.drawingMode = CanvasPatternHelper.MODE_FILL;
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingMode = CanvasPatternHelper.MODE_FILL;
                 break;
             case "stroke":
-                this.canvasHelper.patternHelper.drawingMode = CanvasPatternHelper.MODE_STROKE;
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingMode = CanvasPatternHelper.MODE_STROKE;
                 break;
             case "none":
             default:
-                this.canvasHelper.patternHelper.drawingMode = CanvasPatternHelper.MODE_NONE;
-                this.canvasHelper.patternHelperAux.shouldDraw = false;
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingMode = CanvasPatternHelper.MODE_NONE;
+                // this.canvasHelper.patternHelperAux.shouldDraw = false;
                 break;
         }
     }
     UIMenuItemCanvasDrawingPatternChangeHandler(e) {
         const pattern = e.target.getAttribute("data-drawing-pattern");
-        const paths = document.getElementsByName(e.target.getAttribute('name').replace('pattern', 'path'));
+        const paths =document.querySelectorAll(`[name=${e.target.getAttribute('name').replace('pattern', 'mode')}], [name=${e.target.getAttribute('name').replace('pattern', 'path')}]`);
+
         paths.forEach((path) => {
             path.removeAttribute("disabled");
-            if(path.getAttribute("data-drawing-disabled-pattern").includes(pattern))
+            path.nextElementSibling.classList.remove("btn-danger");
+            path.nextElementSibling.classList.add("btn-outline-primary");
+            if(path.getAttribute("data-drawing-disabled-pattern").includes(pattern)) {
                 path.setAttribute("disabled", null);
+                path.nextElementSibling.classList.add("btn-danger");
+                path.nextElementSibling.classList.remove("btn-outline-primary");
+            }
         });
 
         switch (pattern) {
             case "rect":
-                this.canvasHelper.patternHelper.drawingPattern = CanvasPatternHelper.PATTERN_RECT;
-                this.canvasHelper.patternHelperAux.shouldDraw = false;
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingPattern = CanvasPatternHelper.PATTERN_RECT;
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN_OUTLINE).shouldDraw = false;
+                document.getElementById("controls-img-prev-canvas-img").parentElement.classList.add("d-none");
                 break;
             case "circle":
-                this.canvasHelper.patternHelper.drawingPattern = CanvasPatternHelper.PATTERN_CIRCLE;
-                this.canvasHelper.patternHelperAux.shouldDraw = true;
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingPattern = CanvasPatternHelper.PATTERN_CIRCLE;
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN_OUTLINE).shouldDraw = true;
+                document.getElementById("controls-img-prev-canvas-img").parentElement.classList.add("d-none");
                 break;
             case "ellipse":
-                this.canvasHelper.patternHelper.drawingPattern = CanvasPatternHelper.PATTERN_ELLIPSE;
-                this.canvasHelper.patternHelperAux.shouldDraw = true;
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingPattern = CanvasPatternHelper.PATTERN_ELLIPSE;
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN_OUTLINE).shouldDraw = true;
+                document.getElementById("controls-img-prev-canvas-img").parentElement.classList.add("d-none");
+                break;
+            case "image":
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingPattern = CanvasPatternHelper.PATTERN_IMAGE;
+                document.getElementById("controls-img-prev-canvas-img").parentElement.classList.remove("d-none");
                 break;
             case "none":
             default:
-                this.canvasHelper.patternHelper.drawingPattern = CanvasPatternHelper.PATTERN_NONE;
-                this.canvasHelper.patternHelperAux.shouldDraw = false;
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingPattern = CanvasPatternHelper.PATTERN_NONE;
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN_OUTLINE).shouldDraw = false;
+                document.getElementById("controls-img-prev-canvas-img").parentElement.classList.add("d-none");
                 break;
         }
     }
@@ -774,6 +866,10 @@ export class App {
     }
     UIMenuItemClearContentClickHandler(e) {
         this.canvasHelper.UpdateLayers();
+    }
+
+    UIMenuItemImagePrevAsContentClickHandler(e) {
+        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).DrawImageAsBackground();
     }
 }
 

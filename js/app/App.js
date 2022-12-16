@@ -1,4 +1,3 @@
-import { CanvasEventHelper } from '/js/app/CanvasEventHelper.js';
 import { ViewerHelper } from '/js/app/ViewerHelper.js';
 import { CanvasPatternHelper } from "/js/app/CanvasPatternHelper.js";
 import { CanvasHelper } from "/js/app/CanvasHelper.js";

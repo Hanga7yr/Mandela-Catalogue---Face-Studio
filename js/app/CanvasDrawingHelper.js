@@ -124,6 +124,17 @@ export class CanvasDrawingHelper {
         this.Reset();
     }
 
+    /**
+     * The handler for the mouseleave event.
+     * @param {MouseEvent} event The event of mouse ip.
+     * @param {CanvasHelper} canvasHelper The canvasHelper from where the event originates.
+     * @constructor
+     */
+    OnMouseLeave(event, canvasHelper) {
+        this.ClearLayer();
+        this.Reset();
+    }
+
 
     /**
      * Set the starting point.
@@ -284,6 +295,7 @@ export class CanvasDrawingHelper {
         if(!this.onDraw.includes(eventHandler))
             this.onDraw.push(eventHandler);
     }
+
 
     static STATE_NONE = 0;
     static STATE_NEED_START_POS = 1;

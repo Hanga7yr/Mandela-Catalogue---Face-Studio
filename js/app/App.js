@@ -42,6 +42,11 @@ export class App {
     constructor(props) {
         this.canvasHelper = new CanvasHelper();
         this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).AddOnChangePatternEventHandler(this.UIMenuItemCanvasOptionPatternChange.bind(this));
+        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).AddOnDrawEventHandler(this.CanvasOnDraw.bind(this));
+        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_IMAGE).AddOnSideShowEventHandler(this.CanvasSideChangeEventHandler.bind(this));
+        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_IMAGE).AddOnSideShowEventHandler(
+            this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).OnSideChange.bind(this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN))
+        );
 
         this.uiConfig = {};
         this.uiConfig.parent = {};
@@ -90,15 +95,27 @@ export class App {
                             panels: [
                                 UIHelper.PrepareFileInputElement({
                                     label: { content: "Front Side" },
-                                    button: { content: "Process" }
+                                    button: {
+                                        content: "Process",
+                                        events: [{ event: "click", handlers: [ this.UIMenuItemFileInputClickHandler.bind(this) ] }],
+                                        attributes: [{ property: "data-target", value: CanvasUVHelper.SIDE_FRONT }]
+                                    }
                                 }),
                                 UIHelper.PrepareFileInputElement({
                                     label: { content: "Left Side" },
-                                    button: { content: "Process" }
+                                    button: {
+                                        content: "Process",
+                                        events: [{ event: "click", handlers: [ this.UIMenuItemFileInputClickHandler.bind(this) ] }],
+                                        attributes: [{ property: "data-target", value: CanvasUVHelper.SIDE_LEFT }]
+                                    }
                                 }),
                                 UIHelper.PrepareFileInputElement({
                                     label: { content: "Right Side" },
-                                    button: { content: "Process" }
+                                    button: {
+                                        content: "Process",
+                                        events: [{ event: "click", handlers: [ this.UIMenuItemFileInputClickHandler.bind(this) ] }],
+                                        attributes: [{ property: "data-target", value: CanvasUVHelper.SIDE_RIGHT }]
+                                    }
                                 }),
                             ]
                         }),
@@ -111,7 +128,7 @@ export class App {
                                     content: [
                                         UIHelper.CreateOrUpdateElement({
                                             tag         : "button",
-                                            content     : "Click to Toggle",
+                                            content     : "Click to Show",
                                             class       : ["btn", "btn-warning", "w-100"],
                                             attributes  : [ { property: "data-target", value: "canvas" } ],
                                             events      : [{
@@ -121,17 +138,95 @@ export class App {
                                         }),
                                         UIHelper.CreateOrUpdateElement({
                                             tag         : "button",
-                                            content     : "Click to Refresh",
+                                            content     : "Click to Clear",
                                             class       : ["btn", "btn-success", "w-100"],
                                             events      : [{
                                                 event: "click",
                                                 handlers: [ this.UIMenuItemClearContentClickHandler.bind(this) ]
                                             }]
+                                        }),
+                                        UIHelper.CreateOrUpdateElement({
+                                            tag: "button",
+                                            id: "canvas-toggle-uv-btn",
+                                            class: ["btn", "btn-danger", "w-100"],
+                                            content: "Show UV Mapping",
+                                            events: [{ event: "click", handlers: [ this.CanvasToggleUVEventHandler.bind(this) ] }]
                                         })
+                                    ]
+                                }),
+                                UIHelper.CreateOrUpdateElement({
+                                    content: [
+                                        UIHelper.PrepareOptionPanelElement({
+                                            header      : { class: ["fs-5"], content: "Side" },
+                                            container   : { class: [] },
+                                            options     : [
+                                                {
+                                                    label   : { content: "None" },
+                                                    item: {
+                                                        id: `canvas-side-${CanvasUVHelper.SIDE_NONE}`,
+                                                        attributes: [
+                                                            { property: "name", value: `face-studio-face-side` },
+                                                            { property: "data-target", value: CanvasUVHelper.SIDE_NONE },
+                                                        ],
+                                                        events: [
+                                                            { event: "click", handlers: [ this.UIMenuItemSideChangeEventHandler.bind(this) ] }
+                                                        ]
+                                                    },
+                                                },
+                                                {
+                                                    label   : { content: "Front Side" },
+                                                    item: {
+                                                        id: `canvas-side-${CanvasUVHelper.SIDE_FRONT}`,
+                                                        attributes: [
+                                                            { property: "name", value: `face-studio-face-side` },
+                                                            { property: "data-target", value: CanvasUVHelper.SIDE_FRONT },
+                                                        ],
+                                                        events: [
+                                                            { event: "click", handlers: [ this.UIMenuItemSideChangeEventHandler.bind(this) ] }
+                                                        ]
+                                                    },
+                                                },
+                                                {
+                                                    label   : { content: "Left Side" },
+                                                    item: {
+                                                        id: `canvas-side-${CanvasUVHelper.SIDE_LEFT}`,
+                                                        attributes: [
+                                                            { property: "name", value: `face-studio-face-side` },
+                                                            { property: "data-target", value: CanvasUVHelper.SIDE_LEFT },
+                                                        ],
+                                                        events: [
+                                                            { event: "click", handlers: [ this.UIMenuItemSideChangeEventHandler.bind(this) ] }
+                                                        ]
+                                                    },
+                                                },
+                                                {
+                                                    label   : { content: "Right Side" },
+                                                    item: {
+                                                        id: `canvas-side-${CanvasUVHelper.SIDE_RIGHT}`,
+                                                        attributes: [
+                                                            { property: "name", value: `face-studio-face-side` },
+                                                            { property: "data-target", value: CanvasUVHelper.SIDE_RIGHT },
+                                                        ],
+                                                        events: [
+                                                            { event: "click", handlers: [ this.UIMenuItemSideChangeEventHandler.bind(this) ] }
+                                                        ]
+                                                    },
+                                                },
+                                            ]
+                                        }),
+                                        UIHelper.CreateOrUpdateElement({
+                                            tag: "button",
+                                            id: "canvas-side-btn",
+                                            class: ["btn", "btn-danger", "w-100"],
+                                            attributes: [{ property: "disabled", value: "" }],
+                                            content: "Save mask",
+                                            events: [{ event: "click", handlers: [ this.UIMenuItemSaveSideMask.bind(this) ] }]
+                                        }),
                                     ]
                                 }),
                                 UIHelper.PrepareImagePreviewElement({
                                     parent: { id: "canvas-img-prev", class: ["d-none"]},
+                                    element: { id: "canvas-img-prev-input", },
                                     button: { content: "As Background", events: [{event: "click", handlers: [this.UIMenuItemImagePrevAsContentClickHandler.bind(this)]}]}
                                 }),
                                 UIHelper.PrepareOptionPanelElement({
@@ -436,27 +531,18 @@ export class App {
         this.viewerHelper.UpdateViewer();
     }
     UIMenuItemFileInputClickHandler(e) {
-        document.getElementById("menu-item-section-body-canvas").scrollIntoView(true);
+        document.getElementById("ui-menu-canvas").scrollIntoView(true);
+        const side = parseInt(e.target.getAttribute("data-target"));
 
         createImageBitmap(e.target.previousElementSibling.files[0])
             .then((fileImageBitmap) => {
-                document.getElementById("controls-img-prev-canvas-img").src = URL.createObjectURL(e.target.previousElementSibling.files[0]);
+                document.getElementById("canvas-img-prev-input").src = URL.createObjectURL(e.target.previousElementSibling.files[0]);
 
-                this.ui.menu.items[0].body
-                    .filter(element => element.element.getAttribute("id").includes("ui-canvas"))[0]
-                    .sections[0].elements[2].firstElementChild.lastElementChild
-                    .querySelector("input")
-                    .click();
-                this.ui.menu.items[0].body
-                    .filter(element => element.element.getAttribute("id").includes("ui-canvas"))[0]
-                    .sections[0].elements[0].firstElementChild.firstElementChild.click();
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_IMAGE).SetSideImageData(side, fileImageBitmap);
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_IMAGE).ShowSide(side);
 
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).image = fileImageBitmap;
+                this.UIMenuItemToggleImagePreview(true);
             });
-
-        // createImageBitmap(this.previousElementSibling.files[0]).then(function(fileImageBitmap) {
-        //     canvasHelper.GetDrawingLayer().drawImage(fileImageBitmap, 0, 0);
-        // });
     }
 
 
@@ -513,13 +599,17 @@ export class App {
                 this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN_OUTLINE).shouldDraw = true;
                 break;
             case CanvasPatternHelper.PATTERN_IMAGE:
-                document.getElementById("ui-menu-canvas").querySelector("#canvas-img-prev").classList.remove("d-none");
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN_OUTLINE).shouldDraw = false;
-                break;
             default:
-                document.getElementById("ui-menu-canvas").querySelector("#canvas-img-prev").classList.add("d-none");
                 this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN_OUTLINE).shouldDraw = false;
                 break;
+        }
+    }
+
+    UIMenuItemToggleImagePreview(shouldShow = false) {
+        if(shouldShow) {
+            document.getElementById("ui-menu-canvas").querySelector("#canvas-img-prev").classList.remove("d-none");
+        } else {
+            document.getElementById("ui-menu-canvas").querySelector("#canvas-img-prev").classList.add("d-none");
         }
     }
     UIMenuItemCanvasOptionChangeHandler(e) {
@@ -566,10 +656,55 @@ export class App {
     }
 
     UIMenuItemClearContentClickHandler(e) {
+        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_IMAGE).ToggleShowUVMapping(false);
         this.canvasHelper.UpdateLayers();
+        this.UIMenuItemToggleImagePreview(false);
+        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_IMAGE).ShowSide(-1);
     }
     UIMenuItemImagePrevAsContentClickHandler(e) {
-        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).DrawImageAsBackground();
+        document.getElementById("canvas-img-prev-input");
+    }
+
+    UIMenuItemSideChangeEventHandler(e) {
+        this.canvasHelper.UpdateLayers();
+        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_IMAGE).ShowSide(parseInt(e.target.getAttribute("data-target")));
+    }
+
+    CanvasSideChangeEventHandler(side) {
+        if (side != 0) {
+            document.getElementById(`canvas-side-${side}`).click();
+
+            const button = document.getElementById("canvas-side-btn");
+            button.classList.add("btn-danger");
+            button.classList.remove("btn-success");
+            button.setAttribute("disabled", "");
+        }
+    }
+
+    UIMenuItemSaveSideMask() {
+        debugger;
+    }
+
+    /**
+     * How to react to drawing callbacks
+     * @param {CanvasPatternHelper} canvasDrawing
+     * @constructor
+     */
+    CanvasOnDraw(canvasDrawing) {
+        if(canvasDrawing.onDrawingSide
+            && canvasDrawing.drawingPath != CanvasPatternHelper.PATH_NONE
+            && canvasDrawing.drawingMode != CanvasPatternHelper.MODE_NONE
+            && canvasDrawing.drawingPattern != CanvasPatternHelper.PATTERN_NONE) {
+            const button = document.getElementById("canvas-side-btn");
+            button.classList.remove("btn-danger");
+            button.classList.add("btn-success");
+            button.removeAttribute("disabled");
+        }
+    }
+
+    CanvasToggleUVEventHandler(e) {
+        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_IMAGE).ToggleShowUVMapping();
+        this.canvasHelper.UpdateLayers();
     }
 }
 

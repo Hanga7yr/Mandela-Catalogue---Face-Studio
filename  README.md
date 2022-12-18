@@ -8,14 +8,11 @@
 - [x]    Mark all Canvas Path disabled.
 - [x]    Disable stroke Mode.
 - [x] On Mode Fill, the image will be filed on the rect made.
-- [ ] Add toggle to mark what is being saved.
-- [ ]    Left, Right, Front
-- [ ] 
-- [ ] Add button to save image into uvmapping.
+- [x] Add toggle to mark what is being saved.
+- [x]    Left, Right, Front
+- [x] Add button to save mask into uvmapping.
 - [ ] Add textbox marking the instruction depending on the option.
-- [ ] 
-- [ ] 
-- [ ] Add toggle uvmapping.
+- [x] Add toggle uvmapping.
 - [ ]    Once clicked will show the current uvmapping state.
 
 

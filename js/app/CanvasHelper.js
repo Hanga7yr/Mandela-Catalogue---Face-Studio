@@ -67,14 +67,14 @@ export class CanvasHelper {
         // this.AddOnMouseDownHandler(patternHelper.OnMouseDownHandler.bind(patternHelper));
         this.AddonMouseDownAndMoveHandler(patternHelper.OnMouseDownHandler.bind(patternHelper));
         this.AddOnMouseUpHandler(patternHelper.OnMouseUpHandler.bind(patternHelper));
-        this.AddOnMouseLeaveHandler(patternHelper.OnMouseUpHandler.bind(patternHelper));
+        this.AddOnMouseLeaveHandler(patternHelper.OnMouseLeave.bind(patternHelper));
         this.AddOnGenerateLayersHandler(patternHelper.GenerateLayers.bind(patternHelper));
 
         const patternOutlineHelper = new CanvasPatternHelper();
         // this.AddOnMouseDownHandler(patternOutlineHelper.OnMouseDownHandler.bind(patternOutlineHelper));
         this.AddonMouseDownAndMoveHandler(patternOutlineHelper.OnMouseDownHandler.bind(patternOutlineHelper));
         this.AddOnMouseUpHandler(patternOutlineHelper.OnMouseUpHandler.bind(patternOutlineHelper));
-        this.AddOnMouseLeaveHandler(patternOutlineHelper.OnMouseUpHandler.bind(patternOutlineHelper));
+        this.AddOnMouseLeaveHandler(patternOutlineHelper.OnMouseLeave.bind(patternOutlineHelper));
         this.AddOnGenerateLayersHandler(patternOutlineHelper.GenerateLayers.bind(patternOutlineHelper));
 
         patternOutlineHelper.isAllowedPermanent = false;
@@ -167,6 +167,7 @@ export class CanvasHelper {
             .forEach((layer) => {
                 layer.canvas.setAttribute("width", this.parentElement.clientWidth);
                 layer.canvas.setAttribute("height", this.parentElement.clientHeight);
+                layer.canvas.dispatchEvent(new Event("change"));
             })
     }
 
@@ -188,7 +189,7 @@ export class CanvasHelper {
 
     /**
      * @param {number} helperID The ID of the helper.
-     * @returns {CanvasDrawingHelper|CanvasPatternHelper} The drawing helper referenced.
+     * @returns {CanvasDrawingHelper|CanvasPatternHelper|CanvasUVHelper} The drawing helper referenced.
      * @constructor
      */
     GetHelper(helperID) {

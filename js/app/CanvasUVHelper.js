@@ -10,32 +10,94 @@ export class CanvasUVHelper extends CanvasDrawingHelper {
     uvMapData;
 
     /**
-     * The layer where changes to the leftSide will be applied.
+     * The layer where the uv map will be rendered.
      * @type {CanvasRenderingContext2D}
      */
-    leftSide;
+    uvMap;
+
+    shouldShowUVMapData = false;
+
     /**
-     The layer where changes to the rightSide will be applied.
-     * @type {CanvasRenderingContext2D}
+     * The layers
+     * @type {CanvasRenderingContext2D[]}
      */
-    rightSide;
+    layers = [];
+
     /**
-     The layer where changes to the frontSide will be applied.
-     * @type {CanvasRenderingContext2D}
+     * The bitmaps with the images to where to get the info.
+     * @type {ImageBitmap[]}
      */
-    frontSide;
+    bitmap = [];
 
 
     constructor(props) {
         super(props);
 
+        this.onSideChange = [];
+
+        const img = new Image();
+        img.src = "/assets/images/uvmapping.png";
+        img.addEventListener("load", (event) => {
+            createImageBitmap(event.target).then((bitmap) => this.uvMapData = bitmap);
+        });
     }
 
     GenerateLayers(layer) {
-        this.leftSide = CanvasHelper.GenerateLayer(layer++);
-        this.rightSide = CanvasHelper.GenerateLayer(layer++);
-        this.frontSide = CanvasHelper.GenerateLayer(layer++);
+        this.uvMap = CanvasHelper.GenerateLayer(layer++);
+        this.layers[CanvasUVHelper.SIDE_FRONT] = CanvasHelper.GenerateLayer(layer++);
+        this.layers[CanvasUVHelper.SIDE_LEFT] = CanvasHelper.GenerateLayer(layer++);
+        this.layers[CanvasUVHelper.SIDE_RIGHT] = CanvasHelper.GenerateLayer(layer++);
 
-        return [this.leftSide, this.rightSide, this.frontSide];
+        this.uvMap.canvas.addEventListener("change", this.OnLayerUpdate.bind(this));
+
+        return [this.uvMap].concat(this.layers);
     }
+
+    OnLayerUpdate(e) {
+        if(this.uvMapData && this.shouldShowUVMapData)
+            e.target.getContext("2d").drawImage(this.uvMapData, 0, 0, e.target.clientWidth, e.target.clientHeight);
+    }
+
+    /**
+     *
+     * @param {number} side
+     * @param {ImageBitmap} imageData
+     * @constructor
+     */
+    SetSideImageData(side, imageData) {
+        this.bitmap[side] = imageData;
+    }
+
+    /**
+     *
+     * @param {number} side
+     * @constructor
+     */
+    ShowSide(side) {
+        if(side != 0 && side != -1 && this.bitmap[side]) this.layers[side].drawImage(this.bitmap[side], 0, 0, this.layers[side].canvas.clientWidth, this.layers[side].canvas.clientHeight);
+        this.onSideChange.forEach((handlers) => handlers(side != -1 ? side : 0));
+    }
+
+    ToggleShowUVMapping(value = null) {
+        this.shouldShowUVMapData = value ? value : !this.shouldShowUVMapData;
+    }
+
+    /**
+     * EventHandlers on the case the utility should show a side.
+     * @type {Array<function(number):void>}
+     */
+    onSideChange;
+    /**
+     * Adds a handler to the onSide Show event.
+     * @param {function(number):void} eventHandler
+     */
+    AddOnSideShowEventHandler(eventHandler) {
+        if(!this.onSideChange.includes(eventHandler))
+            this.onSideChange.push(eventHandler);
+    }
+
+    static SIDE_NONE = 0;
+    static SIDE_FRONT = 1;
+    static SIDE_LEFT = 2;
+    static SIDE_RIGHT = 3;
 }

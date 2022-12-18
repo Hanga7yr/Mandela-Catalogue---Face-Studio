@@ -14,12 +14,19 @@ export class CanvasPatternHelper extends CanvasDrawingHelper {
     drawingPath = CanvasPatternHelper.MODE_NONE;
     drawingPattern = CanvasPatternHelper.PATTERN_NONE;
 
+    onDrawingSide = false;
+
+    /** @type {Path2D[]} */
+    drawingSidePath;
+
     constructor() {
         super();
 
         this.onChangePattern = [];
         this.onChangeMode = [];
         this.onChangePath = [];
+
+        this.drawingSidePath = [];
 
         this.AddOnDrawEventHandler(this.DrawCallback.bind(this));
         this.AddOnDrawingEventHandler(this.DrawingCallback.bind(this));
@@ -55,12 +62,12 @@ export class CanvasPatternHelper extends CanvasDrawingHelper {
         layer.fillStyle = this.fillStyle;
         layer.strokeStyle = this.strokeStyle;
 
-        layer.beginPath();
+        const currentPath = new Path2D();
         switch (this.drawingPattern) {
             case CanvasPatternHelper.PATTERN_RECT:
                 switch (this.drawingPath) {
                     case CanvasPatternHelper.PATH_VERTEX:
-                        layer.rect(
+                        currentPath.rect(
                             startPos.x, startPos.y,
                             deltaPos[0], deltaPos[1]
                         );
@@ -72,7 +79,7 @@ export class CanvasPatternHelper extends CanvasDrawingHelper {
                         const xEnd = deltaPos[0]*2;
                         const yEnd = deltaPos[1]*2;
 
-                        layer.rect(
+                        currentPath.rect(
                             xCenter, yCenter,
                             xEnd, yEnd,
                         );
@@ -84,13 +91,13 @@ export class CanvasPatternHelper extends CanvasDrawingHelper {
             case CanvasPatternHelper.PATTERN_CIRCLE:
                 switch (this.drawingPath) {
                     case CanvasPatternHelper.PATH_VERTEX:
-                        layer.arc(
+                        currentPath.arc(
                             xCenter, yCenter, Math.min(Math.abs(deltaPos[0]), Math.abs(deltaPos[1]))*0.5,
                             0, 2 * Math.PI
                         );
                         break;
                     case CanvasPatternHelper.PATH_RADIUS:
-                        layer.arc(
+                        currentPath.arc(
                             startPos.x, startPos.y, radius,
                             0, 2 * Math.PI
                         );
@@ -100,7 +107,7 @@ export class CanvasPatternHelper extends CanvasDrawingHelper {
                             Math.pow((deltaPos[0]*0.5), 2) + Math.pow((deltaPos[1]*0.5), 2)
                         );
 
-                        layer.arc(
+                        currentPath.arc(
                             xCenter, yCenter, radiusDia,
                             0, 2 * Math.PI
                         );
@@ -112,7 +119,7 @@ export class CanvasPatternHelper extends CanvasDrawingHelper {
             case CanvasPatternHelper.PATTERN_ELLIPSE:
                 switch (this.drawingPath) {
                     case CanvasPatternHelper.PATH_VERTEX:
-                        layer.ellipse(
+                        currentPath.ellipse(
                             xCenter, yCenter,
                             Math.abs(deltaPos[0]/2), Math.abs(deltaPos[1]/2),
                             Math.PI * 2,
@@ -140,14 +147,15 @@ export class CanvasPatternHelper extends CanvasDrawingHelper {
             default:
                 break;
         }
-        layer.closePath();
+        currentPath.closePath();
+        if(this.onDrawingSide) this.drawingSidePath.push(currentPath);
 
         switch (this.drawingMode) {
             case CanvasPatternHelper.MODE_FILL:
-                layer.fill();
+                layer.fill(currentPath);
                 break;
             case CanvasPatternHelper.MODE_STROKE:
-                layer.stroke();
+                layer.stroke(currentPath);
                 break;
             case CanvasPatternHelper.MODE_NONE:
             default:
@@ -215,6 +223,12 @@ export class CanvasPatternHelper extends CanvasDrawingHelper {
         }
         return available;
     }
+
+    OnSideChange(side) {
+        this.drawingSidePath = [];
+        this.onDrawingSide = true;
+    }
+
 
     /**
      * EventHandlers on the case the utility should change pattern.

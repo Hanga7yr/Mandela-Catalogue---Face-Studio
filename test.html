@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <head>
+        <link rel="stylesheet" href="css/bootstrap.css">
+        <script src="js/bootstrap.js"></script>
+
+        <meta charset="UTF-8">
+        <title>Face Studio</title>
+    </head>
+<body>
+</head>
+    <body>
+
+        <script type="module">
+            import {UIHelper} from "./js/app/UIHelper.js";
+
+            document.body.appendChild(
+                UIHelper.PrepareFileInputElement({
+                    label: { content: "File Input"},
+                    button: {content: "Proccess"},
+                    input: {attributes:[{property: "id", value: "inputfile"}]}
+                })
+            );
+
+            document.body.appendChild(
+                UIHelper.PrepareOptionPanelElement({
+                    header: {
+                        content: "Group1",
+                        class: ["fs-5"]
+                    },
+                    container: {
+                        class: ["btn-group-vertical", "w-100"]
+                    },
+                    options: [{
+                        label:{
+                            content: "Option1",
+                            attributes: [
+                                {property: "for", value: "prueba-group-1"},
+                            ]
+                        },
+                        element: {
+                            attributes: [
+                                {property: "id", value: "prueba-group-1"},
+                                {property: "name", value: "prueba-group"}
+                            ]
+                        }
+                    }, {
+                        label:{
+                            content: "Option2",
+                            attributes: [
+                                {property: "for", value: "prueba-group-2"},
+                            ]
+                        },
+                        element: {
+                            attributes: [
+                                {property: "id", value: "prueba-group-2"},
+                                {property: "name", value: "prueba-group"}
+                            ]
+                        }
+                    }]
+                })
+            );
+
+            document.body.appendChild(
+                UIHelper.PrepareImagePreviewElement({
+                    header: {content: "Image Preview", class: ["fs-5"]},
+                    element: {attributes: [{property: "src", value: "assets/images/uvmappi2ng.png"}]},
+                    button: {content: "Proccess", class: ["btn-outline-primary"]}
+                })
+            );
+
+            document.body.appendChild(UIHelper.PrepareMenuItemSectionElement({
+                header: {content: "Canvas", class: ["fs-3"]},
+                panels: [
+                    UIHelper.PrepareOptionPanelElement({
+                        header: {
+                            content: "Group1",
+                            class: ["fs-5"]
+                        },
+                        container: {
+                            class: ["btn-group-vertical", "w-100"]
+                        },
+                        options: [{
+                            label:{
+                                content: "Option1",
+                            },
+                            element: {
+                                attributes: [
+                                    {property: "id", value: "prueba-group-1"},
+                                    {property: "name", value: "prueba-group"}
+                                ]
+                            }
+                        }, {
+                            label:{
+                                content: "Option2",
+                            },
+                            element: {
+                                attributes: [
+                                    {property: "id", value: "prueba-group-2"},
+                                    {property: "name", value: "prueba-group"}
+                                ]
+                            }
+                        }]
+                    }),
+
+                    UIHelper.PrepareOptionPanelElement({
+                        header: {
+                            content: "Group1",
+                            class: ["fs-5"]
+                        },
+                        container: {
+                            class: ["btn-group-vertical", "w-100"]
+                        },
+                        options: [{
+                            label:{
+                                content: "Option1",
+                                attributes: [
+                                    {property: "for", value: "prueba-group-1"},
+                                ]
+                            },
+                            element: {
+                                attributes: [
+                                    {property: "id", value: "prueba-group-1"},
+                                    {property: "name", value: "prueba-group"}
+                                ]
+                            }
+                        }, {
+                            label:{
+                                content: "Option2",
+                                attributes: [
+                                    {property: "for", value: "prueba-group-2"},
+                                ]
+                            },
+                            element: {
+                                attributes: [
+                                    {property: "id", value: "prueba-group-2"},
+                                    {property: "name", value: "prueba-group"}
+                                ]
+                            }
+                        }]
+                    })
+                ]
+            }));
+
+            document.body.appendChild(UIHelper.PrepareUIElement({
+                control: {
+                    content: "+",
+                    attributes: [
+                        {property: "id", value: "menu-btn"},
+                        {property: "aria-controls", value: "menu"},
+                    ]
+                },
+                container:{
+                    attributes: [
+                        {property: "id", value: "menu"},
+                        {property: "aria-labelledby", value: "menu-btn"},
+                    ]
+                },
+                menu: UIHelper.PrepareMenuElement({
+                    parent: {
+                        attributes: [
+                            {property: "id", value: "menu-sub-1"},
+                        ]
+                    },
+                    items: [
+                        UIHelper.PrepareMenuItemElement({
+                            control: {
+                                content: "Controls",
+                                attributes: [
+                                    {property: "id", value: "menu-item-btn-1"},
+                                ]
+                            },
+                            container: {
+                                attributes: [
+                                    {property: "id", value: "menu-item-body-1"},
+                                ]
+                            },
+                            sections: [
+                                UIHelper.PrepareMenuItemSectionElement({
+                                    header: {content: "Canvas", class: ["fs-3"]},
+                                    panels: [
+                                        UIHelper.PrepareOptionPanelElement({
+                                            header: {
+                                                content: "Group1",
+                                                class: ["fs-5"]
+                                            },
+                                            container: {
+                                                class: ["btn-group-vertical", "w-100"]
+                                            },
+                                            options: [{
+                                                label: {
+                                                    content: "Option1",
+                                                    attributes: [
+                                                        {property: "for", value: "prueba-group-1"},
+                                                    ]
+                                                },
+                                                element: {
+                                                    attributes: [
+                                                        {property: "id", value: "prueba-group-1"},
+                                                        {property: "name", value: "prueba-group"}
+                                                    ]
+                                                }
+                                            }, {
+                                                label: {
+                                                    content: "Option2",
+                                                    attributes: [
+                                                        {property: "for", value: "prueba-group-2"},
+                                                    ]
+                                                },
+                                                element: {
+                                                    attributes: [
+                                                        {property: "id", value: "prueba-group-2"},
+                                                        {property: "name", value: "prueba-group"}
+                                                    ]
+                                                }
+                                            }]
+                                        }),
+
+                                        UIHelper.PrepareOptionPanelElement({
+                                            header: {
+                                                content: "Group1",
+                                                class: ["fs-5"]
+                                            },
+                                            container: {
+                                                class: ["btn-group-vertical", "w-100"]
+                                            },
+                                            options: [{
+                                                label: {
+                                                    content: "Option1",
+                                                    attributes: [
+                                                        {property: "for", value: "prueba-group-1"},
+                                                    ]
+                                                },
+                                                element: {
+                                                    attributes: [
+                                                        {property: "id", value: "prueba-group-1"},
+                                                        {property: "name", value: "prueba-group"}
+                                                    ]
+                                                }
+                                            }, {
+                                                label: {
+                                                    content: "Option2",
+                                                    attributes: [
+                                                        {property: "for", value: "prueba-group-2"},
+                                                    ]
+                                                },
+                                                element: {
+                                                    attributes: [
+                                                        {property: "id", value: "prueba-group-2"},
+                                                        {property: "name", value: "prueba-group"}
+                                                    ]
+                                                }
+                                            }]
+                                        })
+                                    ]
+                                })
+                            ]
+                        }),
+                        UIHelper.PrepareMenuItemElement({
+                            control: {
+                                content: "Controls",
+                                attributes: [
+                                    {property: "id", value: "menu-item-btn-2"},
+                                ]
+                            },
+                            container: {
+                                attributes: [
+                                    {property: "id", value: "menu-item-body-2"},
+                                ]
+                            },
+                            sections: [
+                                UIHelper.PrepareMenuItemSectionElement({
+                                    header: {content: "Canvas", class: ["fs-3"]},
+                                    panels: [
+                                        UIHelper.PrepareOptionPanelElement({
+                                            header: {
+                                                content: "Group1",
+                                                class: ["fs-5"]
+                                            },
+                                            container: {
+                                                class: ["btn-group-vertical", "w-100"]
+                                            },
+                                            options: [{
+                                                label: {
+                                                    content: "Option1",
+                                                    attributes: [
+                                                        {property: "for", value: "prueba-group-1"},
+                                                    ]
+                                                },
+                                                element: {
+                                                    attributes: [
+                                                        {property: "id", value: "prueba-group-1"},
+                                                        {property: "name", value: "prueba-group"}
+                                                    ]
+                                                }
+                                            }, {
+                                                label: {
+                                                    content: "Option2",
+                                                    attributes: [
+                                                        {property: "for", value: "prueba-group-2"},
+                                                    ]
+                                                },
+                                                element: {
+                                                    attributes: [
+                                                        {property: "id", value: "prueba-group-2"},
+                                                        {property: "name", value: "prueba-group"}
+                                                    ]
+                                                }
+                                            }]
+                                        }),
+
+                                        UIHelper.PrepareOptionPanelElement({
+                                            header: {
+                                                content: "Group1",
+                                                class: ["fs-5"]
+                                            },
+                                            container: {
+                                                class: ["btn-group-vertical", "w-100"]
+                                            },
+                                            options: [{
+                                                label: {
+                                                    content: "Option1",
+                                                    attributes: [
+                                                        {property: "for", value: "prueba-group-1"},
+                                                    ]
+                                                },
+                                                element: {
+                                                    attributes: [
+                                                        {property: "id", value: "prueba-group-1"},
+                                                        {property: "name", value: "prueba-group"}
+                                                    ]
+                                                }
+                                            }, {
+                                                label: {
+                                                    content: "Option2",
+                                                    attributes: [
+                                                        {property: "for", value: "prueba-group-2"},
+                                                    ]
+                                                },
+                                                element: {
+                                                    attributes: [
+                                                        {property: "id", value: "prueba-group-2"},
+                                                        {property: "name", value: "prueba-group"}
+                                                    ]
+                                                }
+                                            }]
+                                        })
+                                    ]
+                                })
+                            ]
+                        }),
+                        UIHelper.PrepareMenuItemElement({
+                            control: {
+                                content: "Controls",
+                                attributes: [
+                                    {property: "id", value: "menu-item-btn-3"},
+                                ]
+                            },
+                            container: {
+                                attributes: [
+                                    {property: "id", value: "menu-item-body-3"},
+                                ]
+                            },
+                            sections: [
+                                UIHelper.PrepareMenuItemSectionElement({
+                                    header: {content: "Canvas", class: ["fs-3"]},
+                                    panels: [
+                                        UIHelper.PrepareOptionPanelElement({
+                                            header: {
+                                                content: "Group1",
+                                                class: ["fs-5"]
+                                            },
+                                            container: {
+                                                class: ["btn-group-vertical", "w-100"]
+                                            },
+                                            options: [{
+                                                label: {
+                                                    content: "Option1",
+                                                    attributes: [
+                                                        {property: "for", value: "prueba-group-1"},
+                                                    ]
+                                                },
+                                                element: {
+                                                    attributes: [
+                                                        {property: "id", value: "prueba-group-1"},
+                                                        {property: "name", value: "prueba-group"}
+                                                    ]
+                                                }
+                                            }, {
+                                                label: {
+                                                    content: "Option2",
+                                                    attributes: [
+                                                        {property: "for", value: "prueba-group-2"},
+                                                    ]
+                                                },
+                                                element: {
+                                                    attributes: [
+                                                        {property: "id", value: "prueba-group-2"},
+                                                        {property: "name", value: "prueba-group"}
+                                                    ]
+                                                }
+                                            }]
+                                        }),
+
+                                        UIHelper.PrepareOptionPanelElement({
+                                            header: {
+                                                content: "Group1",
+                                                class: ["fs-5"]
+                                            },
+                                            container: {
+                                                class: ["btn-group-vertical", "w-100"]
+                                            },
+                                            options: [{
+                                                label: {
+                                                    content: "Option1",
+                                                    attributes: [
+                                                        {property: "for", value: "prueba-group-1"},
+                                                    ]
+                                                },
+                                                element: {
+                                                    attributes: [
+                                                        {property: "id", value: "prueba-group-1"},
+                                                        {property: "name", value: "prueba-group"}
+                                                    ]
+                                                }
+                                            }, {
+                                                label: {
+                                                    content: "Option2",
+                                                    attributes: [
+                                                        {property: "for", value: "prueba-group-2"},
+                                                    ]
+                                                },
+                                                element: {
+                                                    attributes: [
+                                                        {property: "id", value: "prueba-group-2"},
+                                                        {property: "name", value: "prueba-group"}
+                                                    ]
+                                                }
+                                            }]
+                                        })
+                                    ]
+                                })
+                            ]
+                        })
+                    ]
+                })
+            }));
+        </script>
+    </body>
+</html>

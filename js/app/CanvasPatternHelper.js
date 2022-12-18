@@ -3,6 +3,7 @@ import { CanvasDrawingHelper } from "/js/app/CanvasDrawingHelper.js";
 export class CanvasPatternHelper extends CanvasDrawingHelper {
     fillStyle = "rgb(0, 0, 0)";
     strokeStyle = "rgb(0, 0, 0)";
+
     /**
      * Image to draw on image pattern.
      * @type {ImageBitmap}
@@ -15,6 +16,10 @@ export class CanvasPatternHelper extends CanvasDrawingHelper {
 
     constructor() {
         super();
+
+        this.onChangePattern = [];
+        this.onChangeMode = [];
+        this.onChangePath = [];
 
         this.AddOnDrawEventHandler(this.DrawCallback.bind(this));
         this.AddOnDrawingEventHandler(this.DrawingCallback.bind(this));
@@ -158,18 +163,135 @@ export class CanvasPatternHelper extends CanvasDrawingHelper {
         );
     }
 
+
+    ChangePattern(pattern) {
+        this.drawingPattern = pattern;
+
+        this.onChangePattern
+            .forEach(handler => handler(pattern, this.GetAvailableMode(pattern), this.GetAvailablePath(pattern)));
+    }
+    ChangeMode(mode) {
+        this.drawingMode = mode;
+
+        this.onChangeMode
+            .forEach(handler => handler(mode));
+    }
+    ChangePath(path) {
+        this.drawingPath = path;
+
+        this.onChangePath
+            .forEach(handler => handler(path));
+    }
+
+    GetAvailableMode(pattern) {
+        const available = [];
+        switch (pattern) {
+            case CanvasPatternHelper.PATTERN_CIRCLE:
+            case CanvasPatternHelper.PATTERN_RECT:
+            case CanvasPatternHelper.PATTERN_ELLIPSE:
+                available.push(CanvasPatternHelper.MODE_STROKE);
+            case CanvasPatternHelper.PATTERN_IMAGE:
+                available.push(CanvasPatternHelper.MODE_FILL);
+            default:
+                available.push(CanvasPatternHelper.MODE_NONE);
+                break;
+        }
+        return available;
+    }
+
+    GetAvailablePath(pattern) {
+        const available = [];
+        switch (pattern) {
+            case CanvasPatternHelper.PATTERN_CIRCLE:
+                available.push(CanvasPatternHelper.PATH_DIA);
+            case CanvasPatternHelper.PATTERN_RECT:
+                available.push(CanvasPatternHelper.PATH_RADIUS);
+            case CanvasPatternHelper.PATTERN_ELLIPSE:
+                available.push(CanvasPatternHelper.PATH_VERTEX);
+            case CanvasPatternHelper.PATTERN_IMAGE:
+            default:
+                available.push(CanvasPatternHelper.PATH_NONE);
+                break;
+        }
+        return available;
+    }
+
+    /**
+     * EventHandlers on the case the utility should change pattern.
+     * @type {Array<function(Event):void>}
+     */
+    onChangePattern;
+    /**
+     * Adds a handler to the Change Pattern event.
+     * @param {function(Event):void} eventHandler
+     */
+    AddOnChangePatternEventHandler(eventHandler) {
+        if(!this.onChangePattern.includes(eventHandler))
+            this.onChangePattern.push(eventHandler);
+    }
+
+    /**
+     * EventHandlers on the case the utility should change path.
+     * @type {Array<function(Event):void>}
+     */
+    onChangePath;
+    /**
+     * Adds a handler to the Change Path event.
+     * @param {function(Event):void} eventHandler
+     */
+    AddOnChangePathEventHandler(eventHandler) {
+        if(!this.onChangePath.includes(eventHandler))
+            this.onChangePath.push(eventHandler);
+    }
+
+    /**
+     * EventHandlers on the case the utility should change mode.
+     * @type {Array<function(Event):void>}
+     */
+    onChangeMode;
+    /**
+     * Adds a handler to the Change Mode event.
+     * @param {function(Event):void} eventHandler
+     */
+    AddOnChangeModeEventHandler(eventHandler) {
+        if(!this.onChangeMode.includes(eventHandler))
+            this.onChangeMode.push(eventHandler);
+    }
+
+    static PATTERN = 1;
+    static MODE = 2;
+    static PATH = 3;
+
     static PATTERN_NONE = 0;
     static PATTERN_RECT = 1;
     static PATTERN_CIRCLE = 2;
     static PATTERN_ELLIPSE = 3;
     static PATTERN_IMAGE = 4;
 
+    static PATTERNS = [
+        CanvasPatternHelper.PATTERN_NONE,
+        CanvasPatternHelper.PATTERN_RECT,
+        CanvasPatternHelper.PATTERN_CIRCLE,
+        CanvasPatternHelper.PATTERN_ELLIPSE,
+        CanvasPatternHelper.PATTERN_IMAGE
+    ];
+
     static MODE_NONE = 0;
     static MODE_FILL = 1;
     static MODE_STROKE = 2;
-
+    static MODES = [
+        CanvasPatternHelper.MODE_NONE,
+        CanvasPatternHelper.MODE_FILL,
+        CanvasPatternHelper.MODE_STROKE
+    ];
     static PATH_NONE = 0;
     static PATH_VERTEX = 1;
     static PATH_RADIUS = 2;
     static PATH_DIA = 3;
+    static PATHS = [
+        CanvasPatternHelper.PATH_NONE,
+        CanvasPatternHelper.PATH_VERTEX,
+        CanvasPatternHelper.PATH_RADIUS,
+        CanvasPatternHelper.PATH_DIA
+    ];
 }

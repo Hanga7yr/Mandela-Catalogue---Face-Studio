@@ -4,6 +4,7 @@ import { CanvasHelper } from "/js/app/CanvasHelper.js";
 import { CanvasDrawingHelper } from "/js/app/CanvasDrawingHelper.js";
 import { CanvasPatternHelper } from "/js/app/CanvasPatternHelper.js";
 import { CanvasUVHelper } from "/js/app/CanvasUVHelper.js";
+import { UIHelper } from "/js/app/UIHelper.js";
 
 export class App {
     /**
@@ -24,722 +25,415 @@ export class App {
      */
     canvasContainer = null;
 
-    uiConfig;
+
+    /**
+     * @property {UIHelper.GenericElement}         [parent]
+     * @property {UIHelper.GenericElement}         [container]
+     * @property {HTMLElement}                     [menu]
+     * @property {UIHelper.GenericElement}         [control]
+     */
     ui;
+
+    /**
+     * @type {UIHelper.GenericElement}
+     */
     content;
-    contentConfig;
 
     constructor(props) {
         this.canvasHelper = new CanvasHelper();
+        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).AddOnChangePatternEventHandler(this.UIMenuItemCanvasOptionPatternChange.bind(this));
 
-        this.uiConfig = {
-            menu: {
-                items: [{
-                    header: "Controls",
-                    id: "control",
-                    content: this.PrepareControls(),
-                    onclick: this.UIMenuItemClickHandler,
-                    style: null,
-                    class: ["fs-5", "text-uppercase"]
-                }, {
-                    header: "Credits",
-                    id: "credit",
-                    content: this.PrepareCredits(),
-                    onclick: this.UIMenuItemClickHandler,
-                    style: null,
-                    class: ["fs-5", "text-uppercase"]
-                }],
-                class: ["w-100"],
-                style: [
-                    { height: "100%"                },
-                    { display: "flex"               },
-                    { "flex-flow": "column nowrap"  }
-                ]
-            },
-            control: {
-                content: ["+"],
-                style: null,
-                class: ["rounded-0"],
-                onclick: this.UIControlClickHandler
-            },
-            class: ["col-4"],
-            style: [{"height": "100vh"}]
-        };
-        this.contentConfig = {
-            threejs: {
-                class: ["d-none", "h-100"],
-                style: []
-            },
-            canvas: {
-                class: ["position-relative", "border", "border-dark", "d-none"],
-                style: [{"height": "100vh"},]
-            },
-            class: ["col-8"],
-            style: null
-        }
+        this.uiConfig = {};
+        this.uiConfig.parent = {};
+        this.uiConfig.parent.class = ["col-4"];
+        this.uiConfig.parent.id = "ui-menu";
 
-        this.ui = {
-            element: null,
-            menu:  {
-                element: null,
-                control: null,
-                header: null,
-                items: []
-            },
-            control: {
-                element: null
-            }
-        }
-        this.content = {
-            element: null,
-            viewer: {
-                element: null
-            },
-            canvas: {
-                container: null,
-                layers: []
-            }
-        };
-    }
+        this.uiConfig.control = {};
+        this.uiConfig.control.content = "+";
+        this.uiConfig.control.class = ["btn-primary"];
+        this.uiConfig.control.events = [{
+            event: "click",
+            handlers: [
+                this.UIControlClickHandler.bind(this)
+            ]
+        }];
 
-    GetUI() { return this.ui.element; }
-    GetMenu() { return this.ui.menu.element; }
-    GetMenuControl() { return this.ui.menu.control; }
-    GetMenuHeader() { return this.ui.menu.header; }
-    GetMenuItems() { return this.ui.menu.items; }
+        this.uiConfig.container = {};
+        this.uiConfig.container.id = "ui-menu-container";
 
-    PrepareImagePreviewControl(config = {id: null, section: null, class: null, text: null, style: null, button: {id: null, section: null, text: null, click: null, class: null, style: null}}) {
-        const imagePreviewControlContainer = document.createElement("div");
-        imagePreviewControlContainer.classList.add("d-none");
-
-        const imagePreviewHeaderControl = document.createElement("h6");
-        imagePreviewHeaderControl.innerHTML = config.text;
-        imagePreviewControlContainer.appendChild(imagePreviewHeaderControl);
-
-        const imagePreviewControl = document.createElement("img");
-        imagePreviewControl.setAttribute("id", `controls-${config.section}-${config.id}-img`);
-        imagePreviewControl.setAttribute("alt", "...");
-        imagePreviewControl.classList.add("img-thumbnail");
-        if(config && config.class) config.class.forEach((styleClass) => imagePreviewControl.classList.add(styleClass));
-        if(config && config.style)
-            config.style.map((style) => Object.entries(style)).forEach(([[key, value]]) => imagePreviewControl.style.setProperty(key, value));
-
-        imagePreviewControlContainer.appendChild(imagePreviewControl);
-        if(config && config.button) imagePreviewControlContainer.appendChild(this.PrepareButtonControl(config.button));
-        return imagePreviewControlContainer;
-    }
-    PrepareButtonControl(config = {id: null, section: null, text: null, class: null, style: null, click: null}) {
-        const buttonControl = document.createElement("button");
-        buttonControl.setAttribute("id", `controls-${config.section}-${config.id}-btn`);
-        buttonControl.addEventListener('click', config.click);
-        buttonControl.classList.add("btn");
-        if(config && config.class) config.class.forEach((styleClass) => buttonControl.classList.add(styleClass));
-        if(config && config.style)
-            config.style.map((style) => Object.entries(style)).forEach(([[key, value]]) => buttonControl.style.setProperty(key, value));
-        buttonControl.textContent = config.text;
-        return buttonControl;
-    }
-    PrepareOptionControl(config = {id: null, section: null, text: null, click: null, disabled: null}) {
-        const optionRadio = document.createElement("input");
-        optionRadio.classList.add("me-1", "btn-check");
-        optionRadio.setAttribute("type", "radio");
-        optionRadio.setAttribute("autocomplete", "off");
-        optionRadio.setAttribute("name", `controls-${config.section}-group`);
-        optionRadio.setAttribute("id", `controls-${config.section}-${config.id}-radio`);
-        optionRadio.setAttribute(`data-drawing-${config.section}`, config.id);
-        optionRadio.setAttribute(`data-drawing-disabled-pattern`, config.disabled);
-        optionRadio.addEventListener('change', config.click);
-
-
-        const optionSpan = document.createElement("label");
-        optionSpan.classList.add("btn", "btn-outline-primary", "w-100");
-        optionSpan.setAttribute("for", `controls-${config.section}-${config.id}-radio`);
-        optionSpan.innerHTML = config.text;
-
-        const optionItem = document.createElement("li");
-        optionItem.classList.add("list-group-item", "w-100");
-        optionItem.appendChild(optionRadio);
-        optionItem.appendChild(optionSpan);
-        return optionItem;
-    }
-    PrepareDrawingOptionControl(config= {options: [{id: null, text: null, click: null, options: [{id: null, text: null, disabled: null}]}]}) {
-        const options = [];
-        config.options.forEach((option) => {
-            const optionGroupContainer = document.createElement("div");
-            optionGroupContainer.classList.add("btn-group-vertical", "w-100");
-            optionGroupContainer.setAttribute("role", "group");
-
-            const optionGroupHeader = document.createElement("h6");
-            optionGroupHeader.innerHTML = option.text;
-            optionGroupContainer.appendChild(optionGroupHeader);
-
-            option.options.forEach((subOption) => {
-                optionGroupContainer.appendChild(this.PrepareOptionControl({
-                    id: subOption.id,
-                    section: option.id,
-                    text: subOption.text,
-                    disabled: subOption.disabled,
-                    click: option.click
-                }));
-            });
-            optionGroupContainer.getElementsByTagName("input")[0].setAttribute("checked", null);
-            options.push(optionGroupContainer);
-        });
-        return options;
-    }
-    PrepareFileInputControl(config = {section: null, text: null, id: null}) {
-        const inputContainer = document.createElement("div");
-
-        const inputLabel = document.createElement("label");
-        inputLabel.textContent = config.text;
-        inputLabel.setAttribute("for", `controls-${config.section}-${config.id}-inputField`);
-        inputLabel.classList.add("form-label");
-        inputContainer.appendChild(inputLabel);
-
-        const inputCont = document.createElement("div");
-        inputCont.classList.add("input-group", "mb-3");
-
-        const inputElement = document.createElement("input");
-        inputElement.setAttribute("id", `controls-${config.section}-${config.id}-inputField`);
-        inputElement.setAttribute("type", "file");
-        inputElement.setAttribute("accept", "image/png");
-        inputElement.classList.add("form-control");
-        inputElement.addEventListener('change', this.UIMenuItemFileInputChangeHandler.bind(this));
-        inputCont.appendChild(inputElement);
-
-        const inputBtn = document.createElement("button");
-        inputBtn.setAttribute("id", `controls-${config.section}-${config.id}-btn`);
-        inputBtn.setAttribute("type", "button");
-        inputBtn.setAttribute("disabled", null);
-        inputBtn.innerHTML = "Proccess";
-        inputBtn.classList.add("btn", "btn-danger");
-        inputBtn.addEventListener('click', this.UIMenuItemFileInputClickHandler.bind(this));
-        inputCont.appendChild(inputBtn);
-
-        inputContainer.appendChild(inputCont);
-
-        return inputContainer;
-    }
-    PrepareControls() {
-        const toggleContentViewer = document.createElement("button");
-        toggleContentViewer.setAttribute("id", `controls-viewer-toggle-btn`);
-        toggleContentViewer.addEventListener('click', this.UIMenuItemToggleContentClickHandler.bind(this));
-        toggleContentViewer.classList.add("btn", "btn-warning");
-        toggleContentViewer.textContent = "Click to show";
-
-        const viewer = {
-            header: "3d Viewer",
-            id: "viewer",
-            body: [{
-                elements: [
-                    toggleContentViewer,
-                    '<span>Left-mouse to rotate.</span>',
-                    '<span>Scroll to move in-out.</span>',
-                    '<span>Right-mouse to move.</span>'
-                ]
-            }],
-            style: null,
-            class: ["mb-3"]
-        }
-
-        const faceStudioBodyInputs = [];
-        const faceStudioInputs = {
-            header: "Face Studio Inputs",
-            id: "face-studio-inputs",
-            body: faceStudioBodyInputs,
-            style: null,
-            class: ["mb-3"]
-        };
-
-
-
-        const faceStudioBodyInputsElements = [];
-        faceStudioBodyInputsElements.push(this.PrepareButtonControl({id: 'toggle-uv', section: faceStudioInputs.id, text: "Toggle UV mapping", click: null, class: ["btn-warning"], style: null}));
-
-        [["front-side", "Front Side"], ["right-side", "Right Side"], ["left-side", "Left Side"]].forEach((side) => {
-            faceStudioBodyInputsElements.push(this.PrepareFileInputControl({
-                section: faceStudioInputs.id,
-                text: side[1],
-                id: side[0]
-            }));
-        });
-
-        faceStudioBodyInputs.push({
-            elements: faceStudioBodyInputsElements
-        });
-
-        const faceStudioBody = [];
-        const faceStudio = {
-            header: "Face Studio",
-            id: "face-studio",
-            body: faceStudioBody,
-            style: null,
-            class: ["mb-3"]
-        };
-
-        const faceStudioBodyElements = [];
-        faceStudioBody.push({
-            elements: faceStudioBodyElements
-        });
-
-        const canvasBody = [];
-        const canvas = {
-            header: "Canvas",
-            id: "canvas",
-            body: canvasBody,
-            style: null,
-            class: ["mb-3"]
-        };
-
-        const buttonsContainer = document.createElement("div");
-        buttonsContainer.classList.add("btn-group-vertical", "w-100");
-        buttonsContainer.setAttribute("role", "group");
-
-        buttonsContainer.appendChild(this.PrepareButtonControl({
-            id: canvas.id,
-            section: "toggle",
-            text: "Click to show",
-            class: ["btn-warning"],
-            click: this.UIMenuItemToggleContentClickHandler.bind(this)
-        }));
-
-        buttonsContainer.appendChild(this.PrepareButtonControl({
-            id: canvas.id,
-            section: "clear",
-            text: "Click to refresh",
-            class: ["btn-success"],
-            click: this.UIMenuItemClearContentClickHandler.bind(this)
-        }));
-
-        const canvasBodyElements = [buttonsContainer];
-
-        canvasBodyElements.push(this.PrepareImagePreviewControl({
-            id: canvas.id,
-            section: "img-prev",
-            text: "Image Preview",
-            button: {
-                id: canvas.id,
-                section: "img-prev",
-                text: "As Content",
-                class: ["btn-secondary", "w-100"],
-                click: this.UIMenuItemImagePrevAsContentClickHandler.bind(this)
-            }
-        }));
-        this.PrepareDrawingOptionControl({
-            options: [{
-                id: "pattern",
-                text: "Pattern",
-                click: this.UIMenuItemCanvasDrawingPatternChangeHandler.bind(this),
-                options: [{
-                    id: "none",
-                    text: "None",
-                    disabled: ""
-                }, {
-                    id: "circle",
-                    text: "Circle",
-                    disabled: ""
-                }, {
-                    id: "rect",
-                    text: "Rectangle",
-                    disabled: ""
-                }, {
-                    id: "ellipse",
-                    text: "Ellipse",
-                    disabled: ""
-                }, {
-                    id: "image",
-                    text: "Image",
-                    disabled: ""
-                }]
-            }, {
-                id: "mode",
-                text: "Mode",
-                click: this.UIMenuItemCanvasDrawingModeChangeHandler.bind(this),
-                options: [{
-                    id: "none",
-                    text: "None",
-                    disabled: ""
-                }, {
-                    id: "fill",
-                    text: "Fill",
-                    disabled: "image"
-                }, {
-                    id: "stroke",
-                    text: "Stroke",
-                    disabled: "image"
-                }]
-            }, {
-                id: "path",
-                text: "Path",
-                click: this.UIMenuItemCanvasDrawingPathChangeHandler.bind(this),
-                options: [{
-                    id: "none",
-                    text: "None",
-                    disabled: ""
-                }, {
-                    id: "vertex",
-                    text: "Vertex",
-                    disabled: "image"
-                }, {
-                    id: "radius",
-                    text: "Radius",
-                    disabled: "image ellipse"
-                }, {
-                    id: "dia",
-                    text: "Diametre",
-                    disabled: "image rect ellipse"
-                }]
-            }]
-        })
-            .forEach((option) => canvasBodyElements.push(option));
-
-        canvasBody.push({
-            elements: canvasBodyElements
+        this.uiConfig.menu = {};
+        this.uiConfig.menu = UIHelper.PrepareMenuElement({
+            items: [
+                UIHelper.PrepareMenuItemElement({
+                    control: { content: "Controls"},
+                    container: { id: "ui-menu-1", attributes: [{property: "data-bs-parent", value: "#"+"ui-menu-container"}]},
+                    sections: [
+                        UIHelper.PrepareMenuItemSectionElement({
+                            header: { content: "3D Viewer", id: "viewer" },
+                            panels: [
+                                {
+                                    tag: "button",
+                                    content: "Click to Show",
+                                    class: ["btn", "btn-warning", "w-100"],
+                                    attributes: [{property: "data-target", value: "viewer"}]
+                                },
+                                { content: 'Left-mouse to rotate' },
+                                { content: 'Scroll to move in-out'},
+                                { content: 'Right-mouse to move'  },
+                            ]
+                        }),
+                        UIHelper.PrepareMenuItemSectionElement({
+                            header: { content: "Face Studio", id: "face-studio" },
+                        }),
+                        UIHelper.PrepareMenuItemSectionElement({
+                            header: { content: "Face Studio File Input", id: "face-studio-inputs" },
+                            panels: [
+                                UIHelper.PrepareFileInputElement({
+                                    label: { content: "Front Side" },
+                                    button: { content: "Process" }
+                                }),
+                                UIHelper.PrepareFileInputElement({
+                                    label: { content: "Left Side" },
+                                    button: { content: "Process" }
+                                }),
+                                UIHelper.PrepareFileInputElement({
+                                    label: { content: "Right Side" },
+                                    button: { content: "Process" }
+                                }),
+                            ]
+                        }),
+                        UIHelper.PrepareMenuItemSectionElement({
+                            parent: { id: "ui-menu-canvas" },
+                            header: { content: "Canvas"},
+                            panels: [
+                                UIHelper.CreateOrUpdateElement({
+                                    class: ["btn-group-vertical", "w-100"],
+                                    content: [
+                                        UIHelper.CreateOrUpdateElement({
+                                            tag         : "button",
+                                            content     : "Click to Toggle",
+                                            class       : ["btn", "btn-warning", "w-100"],
+                                            attributes  : [ { property: "data-target", value: "canvas" } ],
+                                            events      : [{
+                                                event: "click",
+                                                handlers: [ this.UIMenuItemToggleContentClickHandler.bind(this) ]
+                                            }]
+                                        }),
+                                        UIHelper.CreateOrUpdateElement({
+                                            tag         : "button",
+                                            content     : "Click to Refresh",
+                                            class       : ["btn", "btn-success", "w-100"],
+                                            events      : [{
+                                                event: "click",
+                                                handlers: [ this.UIMenuItemClearContentClickHandler.bind(this) ]
+                                            }]
+                                        })
+                                    ]
+                                }),
+                                UIHelper.PrepareImagePreviewElement({
+                                    parent: { id: "canvas-img-prev", class: ["d-none"]},
+                                    button: { content: "As Background", events: [{event: "click", handlers: [this.UIMenuItemImagePrevAsContentClickHandler.bind(this)]}]}
+                                }),
+                                UIHelper.PrepareOptionPanelElement({
+                                    header      : { class: ["fs-5"], content: "Pattern" },
+                                    container   : { class: ["btn-group-vertical"] },
+                                    options     : [
+                                        {
+                                            label   : { content: "None" },
+                                            item    : {
+                                                id: `canvas-${CanvasPatternHelper.PATTERN}-${CanvasPatternHelper.PATTERN_NONE}`,
+                                                attributes: [
+                                                    { property: "name", value: `canvas-${CanvasPatternHelper.PATTERN}` },
+                                                    { property: "data-drawing-target", value: CanvasPatternHelper.PATTERN },
+                                                    { property: "data-drawing-value", value: CanvasPatternHelper.PATTERN_NONE },
+                                                ],
+                                                events: [
+                                                    { event: "click", handlers: [ this.UIMenuItemCanvasOptionChangeHandler.bind(this) ] }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            label   : { content: "Rectangle" },
+                                            item    : {
+                                                id: `canvas-${CanvasPatternHelper.PATTERN}-${CanvasPatternHelper.PATTERN_RECT}`,
+                                                attributes: [
+                                                    { property: "name", value: `canvas-${CanvasPatternHelper.PATTERN}` },
+                                                    { property: "data-drawing-target", value: CanvasPatternHelper.PATTERN },
+                                                    { property: "data-drawing-value", value: CanvasPatternHelper.PATTERN_RECT },
+                                                ],
+                                                events: [
+                                                    { event: "click", handlers: [ this.UIMenuItemCanvasOptionChangeHandler.bind(this) ] }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            label   : { content: "Circle" },
+                                            item    : {
+                                                id: `canvas-${CanvasPatternHelper.PATTERN}-${CanvasPatternHelper.PATTERN_CIRCLE}`,
+                                                attributes: [
+                                                    { property: "name", value: `canvas-${CanvasPatternHelper.PATTERN}` },
+                                                    { property: "data-drawing-target", value: CanvasPatternHelper.PATTERN },
+                                                    { property: "data-drawing-value", value: CanvasPatternHelper.PATTERN_CIRCLE },
+                                                ],
+                                                events: [
+                                                    { event: "click", handlers: [ this.UIMenuItemCanvasOptionChangeHandler.bind(this) ] }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            label   : { content: "Ellipse" },
+                                            item    : {
+                                                id: `canvas-${CanvasPatternHelper.PATTERN}-${CanvasPatternHelper.PATTERN_ELLIPSE}`,
+                                                attributes: [
+                                                    { property: "name", value: `canvas-${CanvasPatternHelper.PATTERN}` },
+                                                    { property: "data-drawing-target", value: CanvasPatternHelper.PATTERN },
+                                                    { property: "data-drawing-value", value: CanvasPatternHelper.PATTERN_ELLIPSE },
+                                                ],
+                                                events: [
+                                                    { event: "click", handlers: [ this.UIMenuItemCanvasOptionChangeHandler.bind(this) ] }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            label   : { content: "Image" },
+                                            item    : {
+                                                id: `canvas-${CanvasPatternHelper.PATTERN}-${CanvasPatternHelper.PATTERN_IMAGE}`,
+                                                attributes: [
+                                                    { property: "name", value: `canvas-${CanvasPatternHelper.PATTERN}` },
+                                                    { property: "data-drawing-target", value: CanvasPatternHelper.PATTERN },
+                                                    { property: "data-drawing-value", value: CanvasPatternHelper.PATTERN_IMAGE },
+                                                ],
+                                                events: [
+                                                    { event: "click", handlers: [ this.UIMenuItemCanvasOptionChangeHandler.bind(this) ] }
+                                                ]
+                                            }
+                                        },
+                                    ]
+                                }),
+                                UIHelper.PrepareOptionPanelElement({
+                                    header      : { class: ["fs-5"], content: "Mode" },
+                                    container   : { class: ["btn-group-vertical"] },
+                                    options     : [
+                                        {
+                                            label: { content: "None" },
+                                            item: {
+                                                id: `canvas-${CanvasPatternHelper.MODE}-${CanvasPatternHelper.MODE_NONE}`,
+                                                attributes: [
+                                                    { property: "name", value: `canvas-${CanvasPatternHelper.MODE}` },
+                                                    { property: "data-drawing-target", value: CanvasPatternHelper.MODE },
+                                                    { property: "data-drawing-value", value: CanvasPatternHelper.MODE_NONE },
+                                                ],
+                                                events: [
+                                                    { event: "click", handlers: [ this.UIMenuItemCanvasOptionChangeHandler.bind(this) ] }
+                                                ]
+                                            }
+                                        }, {
+                                            label: { content: "Fill" },
+                                            item: {
+                                                id: `canvas-${CanvasPatternHelper.MODE}-${CanvasPatternHelper.MODE_FILL}`,
+                                                attributes: [
+                                                    { property: "name", value: `canvas-${CanvasPatternHelper.MODE}` },
+                                                    { property: "data-drawing-target", value: CanvasPatternHelper.MODE },
+                                                    { property: "data-drawing-value", value: CanvasPatternHelper.MODE_FILL },
+                                                ],
+                                                events: [
+                                                    { event: "click", handlers: [ this.UIMenuItemCanvasOptionChangeHandler.bind(this) ] }
+                                                ]
+                                            }
+                                        }, {
+                                            label: { content: "Stroke" },
+                                            item: {
+                                                id: `canvas-${CanvasPatternHelper.MODE}-${CanvasPatternHelper.MODE_STROKE}`,
+                                                attributes: [
+                                                    { property: "name", value: `canvas-${CanvasPatternHelper.MODE}` },
+                                                    { property: "data-drawing-target", value: CanvasPatternHelper.MODE },
+                                                    { property: "data-drawing-value", value: CanvasPatternHelper.MODE_STROKE },
+                                                ],
+                                                events: [
+                                                    { event: "click", handlers: [ this.UIMenuItemCanvasOptionChangeHandler.bind(this) ] }
+                                                ]
+                                            }
+                                        },
+                                    ]
+                                }),
+                                UIHelper.PrepareOptionPanelElement({
+                                    header      : { class: ["fs-5"], content: "Path" },
+                                    container   : { class: ["btn-group-vertical"] },
+                                    options     : [
+                                        {
+                                            label: { content: "None" },
+                                            item: {
+                                                id: `canvas-${CanvasPatternHelper.PATH}-${CanvasPatternHelper.PATH_NONE}`,
+                                                attributes: [
+                                                    { property: "name", value: `canvas-${CanvasPatternHelper.PATH}` },
+                                                    { property: "data-drawing-target", value: CanvasPatternHelper.PATH },
+                                                    { property: "data-drawing-value", value: CanvasPatternHelper.PATH_NONE },
+                                                ],
+                                                events: [
+                                                    { event: "click", handlers: [ this.UIMenuItemCanvasOptionChangeHandler.bind(this) ] }
+                                                ]
+                                            }
+                                        }, {
+                                            label: { content: "Vertex" },
+                                            item: {
+                                                id: `canvas-${CanvasPatternHelper.PATH}-${CanvasPatternHelper.PATH_VERTEX}`,
+                                                attributes: [
+                                                    { property: "name", value: `canvas-${CanvasPatternHelper.PATH}` },
+                                                    { property: "data-drawing-target", value: CanvasPatternHelper.PATH },
+                                                    { property: "data-drawing-value", value: CanvasPatternHelper.PATH_VERTEX },
+                                                ],
+                                                events: [
+                                                    { event: "click", handlers: [ this.UIMenuItemCanvasOptionChangeHandler.bind(this) ] }
+                                                ]
+                                            }
+                                        }, {
+                                            label: { content: "Radius" },
+                                            item: {
+                                                id: `canvas-${CanvasPatternHelper.PATH}-${CanvasPatternHelper.PATH_RADIUS}`,
+                                                attributes: [
+                                                    { property: "name", value: `canvas-${CanvasPatternHelper.PATH}` },
+                                                    { property: "data-drawing-target", value: CanvasPatternHelper.PATH },
+                                                    { property: "data-drawing-value", value: CanvasPatternHelper.PATH_RADIUS },
+                                                ],
+                                                events: [
+                                                    { event: "click", handlers: [ this.UIMenuItemCanvasOptionChangeHandler.bind(this) ] }
+                                                ]
+                                            }
+                                        },  {
+                                            label: { content: "Dia" },
+                                            item: {
+                                                id: `canvas-${CanvasPatternHelper.PATH}-${CanvasPatternHelper.PATH_DIA}`,
+                                                attributes: [
+                                                    { property: "name", value: `canvas-${CanvasPatternHelper.PATH}` },
+                                                    { property: "data-drawing-target", value: CanvasPatternHelper.PATH },
+                                                    { property: "data-drawing-value", value: CanvasPatternHelper.PATH_DIA },
+                                                ],
+                                                events: [
+                                                    { event: "click", handlers: [ this.UIMenuItemCanvasOptionChangeHandler.bind(this) ] }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }),
+                            ]
+                        })
+                    ]
+                }),
+                UIHelper.PrepareMenuItemElement({
+                    control: { content: "Credits"},
+                    container: { id: "ui-menu-2", attributes: [{property: "data-bs-parent", value: "#"+"ui-menu-container"}]},
+                    sections: [
+                        UIHelper.PrepareMenuItemSectionElement({
+                            id: "me",
+                            header: { content: "Hanga7yr", class: ["fs-4"] },
+                            title: { content: "Developer", class: ["fs-5"] },
+                            subtitle: { content: "Main", class: ["fs-6"]  },
+                            panels: [
+                                UIHelper.PrepareMenuItemSectionListElement({
+                                    header: { content: "Reason", class: ["fs-6"] },
+                                    items: [
+                                        { content: '<span>Made using <a href="https://threejs.org/" target="_blank" class="card-link">Three.js</a> as a means to learn how to use it</span>' },
+                                        { content: '<span>Heavy use of <a href="https://getbootstrap.com/" target="_blank" class="card-link">Bootstrap</a> for the interface</span>' },
+                                        { content: '<span>Custom canvas figure drawing and ui creation (used most of the time on this)</span>' },
+                                    ]
+                                }),
+                                UIHelper.PrepareMenuItemSectionListElement({
+                                    header: { content: "Socials", class: ["fs-6"] },
+                                    items: [
+                                        { content: '<a href="https://www.reddit.com/user/hanga7yr" class="card-link" target="_blank">Reddit</a>' },
+                                        { content: '<a href="https://github.com/Hanga7yr" class="card-link" target="_blank">Github</a>' },
+                                        { content: 'Discord (<span class="text-decoration-underline">Hangatyr#7060</span>)' },
+                                    ]
+                                })
+                            ]
+                        }),
+                        UIHelper.PrepareMenuItemSectionElement({
+                            id: "mike",
+                            header: { content: "MikeMoore", class: ["fs-4"] },
+                            title: { content: "Assets", class: ["fs-5"] },
+                            panels: [
+                                UIHelper.PrepareMenuItemSectionListElement({
+                                    header: { content: "Credits", class: ["fs-6"] },
+                                    items: [
+                                        { content: '<a href="https://skfb.ly/ouzsK" className="card-link" target="_blank">Base Male Head</a> <span>as is</span>' },
+                                        { content: '<a href="http://creativecommons.org/licenses/by/4.0/" class="card-link" target="_blank">Licensed under Creative Commons Attribution</a>' },
+                                    ]
+                                }),
+                            ]
+                        })
+                    ]
+                })
+            ]
         });
 
-        return [viewer, faceStudio, faceStudioInputs, canvas];
-    }
-    PrepareCredits() {
-        const creditMe = {
-            header: "Hanga7yr",
-            id: "me",
-            body: [{
-                elements: [
-                    '<span>Made using <a href="https://threejs.org/" target="_blank" class="card-link">Three.js</a> as a means to learn how to use it.</span>',
-                    '<span>Heavy use of <a href="https://getbootstrap.com/" target="_blank" class="card-link">Bootstrap</a> for the interface.</span>',
-                    '<span>Custom canvas figure drawing classes (used most of the time on this)</span>'
-                ]
-            }, {
-                elements: [
-                    '<a href="https://www.reddit.com/user/hanga7yr" class="card-link" target="_blank">Reddit</a>',
-                    '<a href="https://github.com/Hanga7yr" class="card-link" target="_blank">Github</a>',
-                    'Discord (<span class="text-decoration-underline">Hangatyr#7060</span>)'
-                ]
-            }],
-            style: null,
-            class: ["mb-3"]
-        };
-
-        const creditModel = {
-            header: "MikeMoore",
-            id: "mike",
-            body: [{
-                elements: [
-                    '<a href="https://skfb.ly/ouzsK" className="card-link" target="_blank">Base Male Head</a> <span>as is</span>',
-                    '<a href="http://creativecommons.org/licenses/by/4.0/" class="card-link" target="_blank">Licensed under Creative Commons Attribution</a>'
-                ]
-            }],
-            style: null,
-            class: ["mb-3"]
-        };
-
-        return [creditMe, creditModel];
+        this.contentConfig = {};
+        this.contentConfig.id = "content";
+        this.contentConfig.class = ["col-8"];
+        this.contentConfig.content = [
+            UIHelper.CreateOrUpdateElement({
+                id          : "viewer-container",
+                class       : ["h-100"],
+                style       : [{property: "min-height", value: "100vh"}],
+                attributes  : [{property: "data-need-refresh", value: "true"}]
+            }), UIHelper.CreateOrUpdateElement({
+                id          : "canvas-container",
+                class       : ["position-relative", "border", "border-dark", "d-none"],
+                style       : [{property: "min-height", value: "100vh"}],
+                attributes  : [{property: "data-need-refresh", value: "true"}],
+            })
+        ];
     }
 
     Generate() {
-        const container = document.createElement("div");
-        container.classList.add("container");
-        container.style.height = "100vh";
+        document.body.prepend(UIHelper.CreateOrUpdateElement({
+            class: ["container"],
+            style: [ {property: "height", value: "100vh"} ],
+            content: UIHelper.CreateOrUpdateElement({
+                class: ["row"],
+                content: [
+                    UIHelper.PrepareUIElement(this.uiConfig),
+                    UIHelper.CreateOrUpdateElement(this.contentConfig)
+                ]
+            })
+        }));
 
-        const row = document.createElement("div");
-        row.classList.add("row");
-        container.appendChild(row);
+        // Change the selected to default and update others.
+        this.UIMenuItemCanvasOptionPatternChange(CanvasPatternHelper.PATTERN_NONE, [0], [0]);
 
-        const ui = this.GenerateUI(this.uiConfig);
-
-        const content = this.GenerateContent(this.contentConfig);
-        this.canvasHelper.SetParentElement(this.content.canvas.container);
+        this.canvasHelper.SetParentElement(document.getElementById("canvas-container"));
         this.canvasHelper.Generate();
 
-        this.viewerHelper = new ViewerHelper(this.content.viewer.element);
-
-        row.appendChild(ui);
-        row.appendChild(content);
-        document.body.prepend(container);
+        this.viewerHelper = new ViewerHelper(document.getElementById("viewer-container"));
+        this.viewerHelper.UpdateViewer();
 
         this.canvasHelper.UpdateLayers();
-        this.viewerHelper.UpdateViewer();
         this.viewerHelper.Animate();
     }
 
-    GenerateContent(config = {threejs: null, canvas: null, class: null, style: null}) {
-        const content = document.createElement("div");
-        if(config && config.class)
-            config.class.forEach((styleClass) => content.classList.add(styleClass));
-        if(config && config.style)
-            config.style.map((style) => Object.entries(style)).forEach(([[key, value]]) => content.style.setProperty(key, value));
-
-        content.appendChild(this.GenerateThreeJSContainer(config && config.threejs ? config.threejs : null));
-        content.appendChild(this.GenerateCanvasContainer(config && config.canvas ? config.canvas : null));
-        this.content.viewer.element.classList.remove("d-none");
-
-        this.content.element = content;
-        return content;
-    }
-    GenerateCanvasContainer(config = {class: null, style: null}) {
-        const canvasContainer = document.createElement("div");
-        if(config && config.class)
-            config.class.forEach((styleClass) => canvasContainer.classList.add(styleClass));
-        if(config && config.style)
-            config.style.map((style) => Object.entries(style)).forEach(([[key, value]]) => canvasContainer.style.setProperty(key, value));
-
-        canvasContainer.setAttribute("data-need-refresh", "true");
-
-        this.canvasHelper.SetParentElement(canvasContainer);
-
-        this.content.canvas.container = canvasContainer;
-        return canvasContainer;
-    }
-    GenerateThreeJSContainer(config = {class: null, style: null}) {
-        const threeJSContainer = document.createElement("div");
-        if(config && config.class)
-            config.class.forEach((styleClass) => threeJSContainer.classList.add(styleClass));
-        if(config && config.style)
-            config.style.map((style) => Object.entries(style)).forEach(([[key, value]]) => threeJSContainer.style.setProperty(key, value));
-
-        threeJSContainer.setAttribute("data-need-refresh", "true");
-        this.content.viewer.element = threeJSContainer;
-        return threeJSContainer;
-    }
-
-
-    GenerateUI(config = {menu: null, control: null, style: null}) {
-        const ui = document.createElement("div");
-        ui.classList.add("d-flex");
-        if(config && config.style)
-            config.style.map((style) => Object.entries(style)).forEach(([[key, value]]) => ui.style.setProperty(key, value));
-        if(config && config.class)
-            config.class.forEach((styleClass) => ui.classList.add(styleClass));
-
-        const uiCont = document.createElement("div")
-        uiCont.classList.add("w-100", "collapse-horizontal");
-        bootstrap.Collapse.getOrCreateInstance(uiCont, { toggle: true }); // Lets bootstrap add the classes.
-
-        if(config && config.menu)
-            uiCont.appendChild(this.GenerateMenu(config.menu));
-        ui.appendChild(uiCont);
-        if(config && config.control)
-            ui.appendChild(this.GenerateUIControl(config.control));
-
-        this.ui.element = uiCont;
-        return ui;
-    }
-    GenerateUIControl(config= {content: null, onclick: null, class: null, style: null}){
-        const uiControl = document.createElement("button");
-        uiControl.classList.add("btn", "btn-secondary", "m-1");
-
-        if(config && config.style)
-            config.style.map((style) => Object.entries(style)).forEach(([[key, value]]) => uiControl.style.setProperty(key, value));
-        if(config && config.class)
-            config.class.forEach((styleClass) => uiControl.classList.add(styleClass));
-        if(config && config.onclick) uiControl.addEventListener('click', config.onclick.bind(this));
-        if(config && config.content) {
-            if(config.content instanceof HTMLElement) {
-                uiControl.appendChild(config.content);
-            } else if(Array.isArray(config.content)) {
-                config.content.forEach((item) => {
-                    if(config.content instanceof HTMLElement) {
-                        uiControl.appendChild(item);
-                    } else uiControl.innerHTML = config.content;
-                });
-            } else uiControl.innerHTML = config.content;
-        }
-
-        this.ui.control.element = uiControl;
-        return uiControl;
-    }
-    GenerateMenu(config = {items: null, class: null, style: null}) {
-        const uiMenu = document.createElement("div");
-
-        uiMenu.classList.add("accordion");
-        uiMenu.setAttribute("id", "menu");
-        if(config && config.style)
-            config.style.map((style) => Object.entries(style)).forEach(([[key, value]]) => uiMenu.style.setProperty(key, value));
-        if(config && config.class)
-            config.class.forEach((styleClass) => uiMenu.classList.add(styleClass));
-        if(config && config.items && Array.isArray(config.items))
-            config.items.forEach((item) => {
-                uiMenu.appendChild(this.AddMenuItem(item));
-            });
-
-        if(this.ui.menu.items.length != 0) {
-            var menuItem = this.ui.menu.items[0];
-            menuItem.element.parentElement.style.flexGrow = "1";
-            menuItem.element.parentElement.style.overflowY = "auto";
-            menuItem.control.classList.remove("collapsed");
-            menuItem.element.classList.add("show");
-        }
-        this.ui.menu.element = uiMenu;
-        return uiMenu;
-    }
-    AddMenuItem(config = {header: "Menu Item 1", id: null, content: null, onclick: null, style: null, class: null}) {
-        const uiMenuItem = document.createElement("div");
-
-        uiMenuItem.classList.add("accordion-item");
-        uiMenuItem.style.flexGrow = "0";
-        if(config && config.id) uiMenuItem.setAttribute("id", "menu-item-" + config.id);
-
-        const uiMenuItemHeader = document.createElement("div");
-        uiMenuItemHeader.classList.add("accordion-header");
-
-        const uiMenuItemControl = document.createElement("button");
-        uiMenuItemControl.setAttribute("data-bs-toggle", "collapse");
-        if(config && config.id) uiMenuItemControl.setAttribute("data-bs-target", "#menu-item-body-" + config.id);
-        if(config && config.id) uiMenuItemControl.setAttribute("aria-controls", "menu-item-body-" + config.id);
-        uiMenuItemControl.setAttribute("aria-expanded", "false");
-        uiMenuItemControl.setAttribute("type", "button");
-        uiMenuItemControl.classList.add("accordion-button", "collapsed");
-
-        if(config && config.id) uiMenuItemControl.setAttribute("id", "menu-item-btn-" + config.id);
-        if(config && config.header) uiMenuItemControl.textContent = config.header;
-        if(config && config.onclick) uiMenuItemControl.addEventListener('click', config.onclick.bind(this));
-        if(config && config.style)
-            config.style.map((style) => Object.entries(style)).forEach(([[key, value]]) => uiMenuItemControl.style.setProperty(key, value));
-        if(config && config.class)
-            config.class.forEach((styleClass) => uiMenuItemControl.classList.add(styleClass));
-
-        const uiMenuItemBody = document.createElement("div");
-        uiMenuItemBody.classList.add("accordion-collapse", "collapse");
-        if(config && config.id) uiMenuItemBody.setAttribute("id", "menu-item-body-" + config.id);
-        if(config && config.id) uiMenuItemBody.setAttribute("aria-labelledby", "menu-item-btn-" + config.id);
-        if(config && config.id) uiMenuItemBody.setAttribute("data-bs-parent", "#menu");
-
-        const uiMenuItemBodyCont = document.createElement("div");
-        uiMenuItemBodyCont.classList.add("accordion-body");
-        uiMenuItemBody.appendChild(uiMenuItemBodyCont);
-
-        this.ui.menu.items.push({
-            element: uiMenuItemBody,
-            control: uiMenuItemControl,
-            header: uiMenuItemHeader,
-            body: []
-        });
-        if(config && config.content)
-            if(Array.isArray(config.content)) {
-                config.content.forEach((content) => {
-                    uiMenuItemBodyCont.appendChild(this.GenerateItemSection(content));
-                });
-            } else uiMenuItemBodyCont.appendChild(config.content);
-
-        uiMenuItemHeader.appendChild(uiMenuItemControl);
-        uiMenuItem.appendChild(uiMenuItemHeader);
-        uiMenuItem.appendChild(uiMenuItemBody);
-
-        return uiMenuItem;
-    }
-    GenerateItemSection(config = {header: null, id: null, body: null, style: null, class: null}) {
-        const card = document.createElement("div");
-
-        card.classList.add("card");
-        if(config && config.class)
-            config.class.forEach((styleClass) => card.classList.add(styleClass));
-        if(config && config.style) card.style = config.style;
-        const row = document.createElement("div");
-        row.classList.add("row", "g-0");
-
-        const cardBody = document.createElement("div");
-        cardBody.classList.add("card-body");
-        if(config && config.id) cardBody.setAttribute("id", "menu-item-section-body-" + config.id);
-
-        const cardTitle = document.createElement("h5");
-        cardTitle.classList.add("card-title");
-        if(config && config.id) cardTitle.setAttribute("id", "menu-item-section-title-" + config.id);
-
-        cardBody.appendChild(cardTitle);
-
-        if(config) {
-            if (config.header) cardTitle.textContent = config.header;
-            if (config.body) {
-                const sections = [];
-                if(Array.isArray(config.body)) {
-                    config.body.forEach((bodyPart) => {
-                        const cardBodyList = document.createElement("ul");
-                        cardBodyList.classList.add("list-group", "list-group-flush");
-
-                        const parts = [];
-                        if(bodyPart && bodyPart.elements
-                            && Array.isArray(bodyPart.elements))
-                            bodyPart.elements.forEach((item) => {
-                                const bodyItem = document.createElement("li");
-                                bodyItem.classList.add("list-group-item");
-
-                                if(item instanceof Element)
-                                    bodyItem.appendChild(item);
-                                else
-                                    bodyItem.innerHTML = item;
-                                cardBodyList.appendChild(bodyItem);
-                                parts.push(bodyItem);
-                            });
-                        cardBody.appendChild(cardBodyList);
-                        sections.push({
-                            element: cardBodyList,
-                            elements: parts
-                        });
-                    });
-                } else cardBody.appendChild(config.body);
-                this.ui.menu.items.at(-1).body.push({
-                    element: cardBody,
-                    sections: sections
-                })
-            }
-        }
-
-        row.appendChild(cardBody);
-        card.appendChild(row);
-        return card;
-    }
-
     UIControlClickHandler(e) {
-        bootstrap.Collapse.getOrCreateInstance(app.ui.element, {toggle: false}).toggle();
+        const uiContainer = document.getElementById("ui-menu");
+        const contentContainer = document.getElementById("content");
 
-        if(this.uiConfig.class.some(uiClass => app.ui.element.parentElement.classList.contains(uiClass))) {
-            this.uiConfig.class.forEach(uiClass => app.ui.element.parentElement.classList.remove(uiClass));
-            app.ui.element.parentElement.classList.add("col-1");
+        bootstrap.Collapse.getOrCreateInstance(document.getElementById("ui-menu"), {toggle: false}).toggle();
+
+        if(uiContainer.classList.contains("col-4")) {
+            uiContainer.classList.add("col-1");
+            uiContainer.classList.remove("col-4");
         } else {
-            app.ui.element.parentElement.classList.remove("col-1");
-            this.uiConfig.class.forEach(uiClass => app.ui.element.parentElement.classList.add(uiClass));
+            uiContainer.classList.add("col-4");
+            uiContainer.classList.remove("col-1");
         }
-        if(this.contentConfig.class.some(contentClass => app.content.element.classList.contains(contentClass))) {
-            this.contentConfig.class.forEach(contentClass => app.content.element.classList.remove(contentClass));
-            app.content.element.classList.add("col-11");
+
+        if(contentContainer.classList.contains("col-8")) {
+            contentContainer.classList.add("col-11");
+            contentContainer.classList.remove("col-8");
         }else {
-            app.content.element.classList.remove("col-11");
-            this.contentConfig.class.forEach(contentClass => app.content.element.classList.add(contentClass));
+            contentContainer.classList.add("col-8");
+            contentContainer.classList.remove("col-11");
         }
 
         this.canvasHelper.UpdateLayers();
         this.viewerHelper.UpdateViewer();
-    }
-    UIMenuItemClickHandler(e) {
-        app.ui.menu.items
-            .filter(menuItem => menuItem.control == this)
-            .map(menuItem => menuItem)
-            .forEach(menuItem => {
-                menuItem.element.parentElement.style.flexGrow = "1"
-                menuItem.element.parentElement.style.overflowY = "auto";
-                if(menuItem.control.classList.contains("collapsed")) {
-                    menuItem.element.parentElement.style.flexGrow = "0";
-                    menuItem.element.parentElement.style.overflowY = "visible"; // When hidden
-                }
-            });
-        app.ui.menu.items
-            .filter(menuItem => menuItem.control !== this)
-            .map(menuItem => menuItem)
-            .forEach(menuItem => {
-                menuItem.element.parentElement.style.flexGrow = "0";
-                menuItem.element.parentElement.style.overflowY = "visible"; // When hidden
-                bootstrap.Collapse.getOrCreateInstance(menuItem.element, {toggle: false}).show();
-                if(!menuItem.control.classList.contains("collapsed")) {
-                    menuItem.element.parentElement.style.flexGrow = "1";
-                    menuItem.element.parentElement.style.overflowY = "auto";
-                }
-            });
-    }
-    UIMenuItemFileInputChangeHandler(e) {
-        const inputElement = document.getElementById(e.target.getAttribute("id").replace("-inputField", "-btn"));
-        inputElement.classList.remove("btn-danger");
-        inputElement.classList.add("btn-success");
-        inputElement.removeAttribute("disabled");
     }
     UIMenuItemFileInputClickHandler(e) {
         document.getElementById("menu-item-section-body-canvas").scrollIntoView(true);
@@ -749,12 +443,12 @@ export class App {
                 document.getElementById("controls-img-prev-canvas-img").src = URL.createObjectURL(e.target.previousElementSibling.files[0]);
 
                 this.ui.menu.items[0].body
-                    .filter(element => element.element.getAttribute("id").includes("canvas"))[0]
+                    .filter(element => element.element.getAttribute("id").includes("ui-canvas"))[0]
                     .sections[0].elements[2].firstElementChild.lastElementChild
                     .querySelector("input")
                     .click();
                 this.ui.menu.items[0].body
-                    .filter(element => element.element.getAttribute("id").includes("canvas"))[0]
+                    .filter(element => element.element.getAttribute("id").includes("ui-canvas"))[0]
                     .sections[0].elements[0].firstElementChild.firstElementChild.click();
 
                 this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).image = fileImageBitmap;
@@ -765,110 +459,115 @@ export class App {
         // });
     }
 
-    UIMenuItemCanvasDrawingPathChangeHandler(e) {
-        const path = e.target.getAttribute("data-drawing-path");
-        switch (path) {
-            case "vertex":
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingPath = CanvasPatternHelper.PATH_VERTEX;
-                break;
-            case "radius":
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingPath = CanvasPatternHelper.PATH_RADIUS;
-                break;
-            case "dia":
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingPath = CanvasPatternHelper.PATH_DIA;
-                break;
-            case "none":
-            default:
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingPath = CanvasPatternHelper.PATH_NONE;
-                break;
-        }
-    }
-    UIMenuItemCanvasDrawingModeChangeHandler(e) {
-        const mode = e.target.getAttribute("data-drawing-mode");
-        switch (mode) {
-            case "fill":
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingMode = CanvasPatternHelper.MODE_FILL;
-                break;
-            case "stroke":
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingMode = CanvasPatternHelper.MODE_STROKE;
-                break;
-            case "none":
-            default:
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingMode = CanvasPatternHelper.MODE_NONE;
-                // this.canvasHelper.patternHelperAux.shouldDraw = false;
-                break;
-        }
-    }
-    UIMenuItemCanvasDrawingPatternChangeHandler(e) {
-        const pattern = e.target.getAttribute("data-drawing-pattern");
-        const paths =document.querySelectorAll(`[name=${e.target.getAttribute('name').replace('pattern', 'mode')}], [name=${e.target.getAttribute('name').replace('pattern', 'path')}]`);
 
-        paths.forEach((path) => {
-            path.removeAttribute("disabled");
-            path.nextElementSibling.classList.remove("btn-danger");
-            path.nextElementSibling.classList.add("btn-outline-primary");
-            if(path.getAttribute("data-drawing-disabled-pattern").includes(pattern)) {
-                path.setAttribute("disabled", null);
-                path.nextElementSibling.classList.add("btn-danger");
-                path.nextElementSibling.classList.remove("btn-outline-primary");
-            }
-        });
+    /**
+     *
+     * @param {number} pattern
+     * @param {number[]} modeAvailable
+     * @param {number[]} pathAvailable
+     * @constructor
+     */
+    UIMenuItemCanvasOptionPatternChange(pattern, modeAvailable, pathAvailable) {
+        if(modeAvailable && Array.isArray(modeAvailable)) {
+            CanvasPatternHelper
+                .MODES
+                .map((mode) => document.getElementById(`canvas-${CanvasPatternHelper.MODE}-${mode}`))
+                .forEach((option) => {
+                    option.setAttribute("disabled", "");
+                    option.parentElement.querySelector(`[for='${option.getAttribute("id")}']`).classList.add("btn-danger");
+                });
+            CanvasPatternHelper
+                .MODES
+                .filter((mode) => modeAvailable.includes(mode))
+                .map((mode) => document.getElementById(`canvas-${CanvasPatternHelper.MODE}-${mode}`))
+                .forEach((option) => {
+                    option.removeAttribute("disabled");
+                    option.parentElement.querySelector(`[for='${option.getAttribute("id")}']`).classList.remove("btn-danger");
+                    option.parentElement.firstElementChild.click();
+                });
+        }
+
+        if(pathAvailable && Array.isArray(pathAvailable)) {
+            CanvasPatternHelper
+                .PATHS
+                .map((path) => document.getElementById(`canvas-${CanvasPatternHelper.PATH}-${path}`))
+                .forEach((option) => {
+                    option.setAttribute("disabled", "");
+                    option.parentElement.querySelector(`[for='${option.getAttribute("id")}']`).classList.add("btn-danger");
+                });
+
+            CanvasPatternHelper
+                .PATHS
+                .filter((path) => pathAvailable.includes(path))
+                .map((path) => document.getElementById(`canvas-${CanvasPatternHelper.PATH}-${path}`))
+                .forEach((option) => {
+                    option.removeAttribute("disabled");
+                    option.parentElement.querySelector(`[for='${option.getAttribute("id")}']`).classList.remove("btn-danger");
+                    option.parentElement.firstElementChild.click();
+                });
+        }
 
         switch (pattern) {
-            case "rect":
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingPattern = CanvasPatternHelper.PATTERN_RECT;
+            case CanvasPatternHelper.PATTERN_CIRCLE:
+            case CanvasPatternHelper.PATTERN_ELLIPSE:
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN_OUTLINE).shouldDraw = true;
+                break;
+            case CanvasPatternHelper.PATTERN_IMAGE:
+                document.getElementById("ui-menu-canvas").querySelector("#canvas-img-prev").classList.remove("d-none");
                 this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN_OUTLINE).shouldDraw = false;
-                document.getElementById("controls-img-prev-canvas-img").parentElement.classList.add("d-none");
                 break;
-            case "circle":
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingPattern = CanvasPatternHelper.PATTERN_CIRCLE;
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN_OUTLINE).shouldDraw = true;
-                document.getElementById("controls-img-prev-canvas-img").parentElement.classList.add("d-none");
-                break;
-            case "ellipse":
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingPattern = CanvasPatternHelper.PATTERN_ELLIPSE;
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN_OUTLINE).shouldDraw = true;
-                document.getElementById("controls-img-prev-canvas-img").parentElement.classList.add("d-none");
-                break;
-            case "image":
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingPattern = CanvasPatternHelper.PATTERN_IMAGE;
-                document.getElementById("controls-img-prev-canvas-img").parentElement.classList.remove("d-none");
-                break;
-            case "none":
             default:
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).drawingPattern = CanvasPatternHelper.PATTERN_NONE;
+                document.getElementById("ui-menu-canvas").querySelector("#canvas-img-prev").classList.add("d-none");
                 this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN_OUTLINE).shouldDraw = false;
-                document.getElementById("controls-img-prev-canvas-img").parentElement.classList.add("d-none");
                 break;
         }
     }
+    UIMenuItemCanvasOptionChangeHandler(e) {
+        const option = parseInt(e.target.getAttribute("data-drawing-target"));
+        const value = parseInt(e.target.getAttribute("data-drawing-value"));
+        switch (option) {
+            case CanvasPatternHelper.PATTERN:
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).ChangePattern(value);
+                break;
+            case CanvasPatternHelper.MODE:
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).ChangeMode(value);
+                break;
+            case CanvasPatternHelper.PATH:
+                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).ChangePath(value);
+                break;
+        }
+    }
+
     UIMenuItemToggleContentClickHandler(e) {
-        if(e.target.getAttribute("id").includes('canvas')) {
-            this.content.viewer.element.classList.add("d-none");
-            this.content.canvas.container.classList.remove("d-none");
+        const viewerContainer = document.getElementById("viewer-container");
+        const canvasContainer = document.getElementById("canvas-container");
 
-            this.content.viewer.element.setAttribute("data-need-refresh", "true");
+        if(e.target.getAttribute("data-target").includes('canvas')) {
+            viewerContainer.classList.add("d-none");
+            canvasContainer.classList.remove("d-none");
 
-            if(this.content.canvas.container.getAttribute("data-need-refresh") == "true") {
-                this.content.canvas.container.setAttribute("data-need-refresh", "false");
+            viewerContainer.setAttribute("data-need-refresh", "true");
+
+            if(canvasContainer.getAttribute("data-need-refresh") == "true") {
+                canvasContainer.setAttribute("data-need-refresh", "false");
                 this.canvasHelper.UpdateLayers();
             }
         } else {
-            this.content.viewer.element.classList.remove("d-none");
-            this.content.canvas.container.classList.add("d-none");
+            viewerContainer.classList.remove("d-none");
+            canvasContainer.classList.add("d-none");
 
-            this.content.canvas.container.setAttribute("data-need-refresh", "true");
+            canvasContainer.setAttribute("data-need-refresh", "true");
 
-            if(this.content.viewer.element.getAttribute("data-need-refresh") == "true") {
-                this.content.viewer.element.setAttribute("data-need-refresh", "true");
+            if(viewerContainer.getAttribute("data-need-refresh") == "true") {
+                viewerContainer.setAttribute("data-need-refresh", "true");
                 this.viewerHelper.UpdateViewer();
             }
         }
     }
+
     UIMenuItemClearContentClickHandler(e) {
         this.canvasHelper.UpdateLayers();
     }
-
     UIMenuItemImagePrevAsContentClickHandler(e) {
         this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).DrawImageAsBackground();
     }

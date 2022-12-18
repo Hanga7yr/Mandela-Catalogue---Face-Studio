@@ -78,6 +78,7 @@ export class CanvasHelper {
         this.AddOnGenerateLayersHandler(patternOutlineHelper.GenerateLayers.bind(patternOutlineHelper));
 
         patternOutlineHelper.isAllowedPermanent = false;
+        patternOutlineHelper.shouldDraw = false;
         patternOutlineHelper.drawingMode = CanvasPatternHelper.MODE_STROKE;
         patternOutlineHelper.drawingPattern = CanvasPatternHelper.PATTERN_RECT;
         patternOutlineHelper.drawingPath = CanvasPatternHelper.PATH_VERTEX;

@@ -29,6 +29,12 @@ export class CanvasUVHelper extends CanvasDrawingHelper {
      */
     bitmap = [];
 
+    /**
+     * The Paths to extract data from bitmaps
+     * @type {Path2D[][]}
+     */
+    mask = [];
+
 
     constructor(props) {
         super(props);
@@ -49,13 +55,17 @@ export class CanvasUVHelper extends CanvasDrawingHelper {
         this.layers[CanvasUVHelper.SIDE_RIGHT] = CanvasHelper.GenerateLayer(layer++);
 
         this.uvMap.canvas.addEventListener("change", this.OnLayerUpdate.bind(this));
+        this.layers[CanvasUVHelper.SIDE_FRONT].canvas.setAttribute("data-target", CanvasUVHelper.SIDE_FRONT);
+        this.layers[CanvasUVHelper.SIDE_LEFT].canvas.setAttribute("data-target", CanvasUVHelper.SIDE_LEFT);
+        this.layers[CanvasUVHelper.SIDE_RIGHT].canvas.setAttribute("data-target", CanvasUVHelper.SIDE_RIGHT);
 
         return [this.uvMap].concat(this.layers);
     }
 
     OnLayerUpdate(e) {
-        if(this.uvMapData && this.shouldShowUVMapData)
+        if(this.uvMapData && this.shouldShowUVMapData) {
             e.target.getContext("2d").drawImage(this.uvMapData, 0, 0, e.target.clientWidth, e.target.clientHeight);
+        }
     }
 
     /**
@@ -71,6 +81,16 @@ export class CanvasUVHelper extends CanvasDrawingHelper {
     /**
      *
      * @param {number} side
+     * @param {Path2D[]} pathData
+     * @constructor
+     */
+    SetSideMask(side, pathData) {
+        this.mask[side] = pathData;
+    }
+
+    /**
+     *
+     * @param {number} side
      * @constructor
      */
     ShowSide(side) {
@@ -81,6 +101,31 @@ export class CanvasUVHelper extends CanvasDrawingHelper {
     ToggleShowUVMapping(value = null) {
         this.shouldShowUVMapData = value ? value : !this.shouldShowUVMapData;
     }
+
+    /**
+     *
+     * @param {number} side
+     * @param {CanvasRenderingContext2D} layer
+     * @param {Path2D[]} mask
+     * @constructor
+     */
+    ObtainMaskedArea(side, mask) {
+        this.mask[side] = mask;
+        document.layer = this.layers[side];
+        document.mask = mask;
+        document.image = this.bitmap[side];
+
+        mask.forEach(mask => this.layers[side].fill(mask));
+        this.layers[side].globalCompositeOperation = "source-in";
+
+        this.layers[side].drawImage(this.bitmap[side], 0, 0, this.layers[side].canvas.clientWidth, this.layers[side].canvas.clientHeight);
+
+        this.layers[side].globalCompositeOperation = "source-over";
+
+        // On move modify transform, and redraw to move the masked zone over??
+    }
+
+
 
     /**
      * EventHandlers on the case the utility should show a side.

@@ -57,6 +57,7 @@ export class CanvasHelper {
         this.onMouseLeave = [];
         this.onMouseUp = [];
         this.onMouseDown = [];
+        this.onMouseDownMoveAndUp = [];
         this.onMouseMove = [];
         this.onGenerateLayers = [];
         
@@ -64,16 +65,17 @@ export class CanvasHelper {
         this.AddOnGenerateLayersHandler(uvHelper.GenerateLayers.bind(uvHelper));
 
         const patternHelper = new CanvasPatternHelper();
-        // this.AddOnMouseDownHandler(patternHelper.OnMouseDownHandler.bind(patternHelper));
+        this.AddOnMouseDownHandler(patternHelper.OnMouseDownHandler.bind(patternHelper));
         this.AddonMouseDownAndMoveHandler(patternHelper.OnMouseDownHandler.bind(patternHelper));
-        this.AddOnMouseUpHandler(patternHelper.OnMouseUpHandler.bind(patternHelper));
+        // this.AddOnMouseUpHandler(patternHelper.OnMouseUpHandler.bind(patternHelper));
+        this.AddonMouseDownMoveAndUpHandler(patternHelper.OnMouseUpHandler.bind(patternHelper));
         this.AddOnMouseLeaveHandler(patternHelper.OnMouseLeave.bind(patternHelper));
         this.AddOnGenerateLayersHandler(patternHelper.GenerateLayers.bind(patternHelper));
 
         const patternOutlineHelper = new CanvasPatternHelper();
         // this.AddOnMouseDownHandler(patternOutlineHelper.OnMouseDownHandler.bind(patternOutlineHelper));
         this.AddonMouseDownAndMoveHandler(patternOutlineHelper.OnMouseDownHandler.bind(patternOutlineHelper));
-        this.AddOnMouseUpHandler(patternOutlineHelper.OnMouseUpHandler.bind(patternOutlineHelper));
+        this.AddonMouseDownMoveAndUpHandler(patternOutlineHelper.OnMouseUpHandler.bind(patternOutlineHelper));
         this.AddOnMouseLeaveHandler(patternOutlineHelper.OnMouseLeave.bind(patternOutlineHelper));
         this.AddOnGenerateLayersHandler(patternOutlineHelper.GenerateLayers.bind(patternOutlineHelper));
 
@@ -243,8 +245,10 @@ export class CanvasHelper {
 
         if(!this.eventState.includes(CanvasHelper.MOUSE_UP))
             this.eventState.push(CanvasHelper.MOUSE_UP);
-        if(this.eventState.includes(CanvasHelper.MOUSE_DOWN))
+        if(this.eventState.includes(CanvasHelper.MOUSE_DOWN)) {
             this.eventState.splice(this.eventState.indexOf(CanvasHelper.MOUSE_DOWN));
+            this.onMouseDownMoveAndUp.forEach(eventHandler => eventHandler(event, this));
+        }
 
         this.onMouseUp.forEach(eventHandler => eventHandler(event, this));
     }
@@ -336,6 +340,13 @@ export class CanvasHelper {
     onMouseDownAndMove;
 
     /**
+     * EventHandlers on the case the leftClick is down and moving
+     * In this case, {@link CanvasHelper#onMouseMove} will be invoked regardless and {@link CanvasHelper#onMouseDown} once.
+     * @type {Array<function(Event, CanvasHelper):void>}
+     */
+    onMouseDownMoveAndUp;
+
+    /**
      * EventHandlers on the state where layers are being generated.
      * @type {Array<function(number):CanvasRenderingContext2D[]|CanvasRenderingContext2D>}
      */
@@ -402,5 +413,14 @@ export class CanvasHelper {
     AddonMouseDownAndMoveHandler(eventHandler) {
         if(!this.onMouseDownAndMove.includes(eventHandler))
             this.onMouseDownAndMove.push(eventHandler);
+    }
+
+    /**
+     * Adds a handler to the onMouseDownMoveAndUpEvent.
+     * @param {function(Event, CanvasHelper):void} eventHandler
+     */
+    AddonMouseDownMoveAndUpHandler(eventHandler) {
+        if(!this.onMouseDownMoveAndUp.includes(eventHandler))
+            this.onMouseDownMoveAndUp.push(eventHandler);
     }
 }

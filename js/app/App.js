@@ -167,6 +167,7 @@ export class App {
                                                         attributes: [
                                                             { property: "name", value: `face-studio-face-side` },
                                                             { property: "data-target", value: CanvasUVHelper.SIDE_NONE },
+                                                            { property: "value", value: CanvasUVHelper.SIDE_NONE },
                                                         ],
                                                         events: [
                                                             { event: "click", handlers: [ this.UIMenuItemSideChangeEventHandler.bind(this) ] }
@@ -180,6 +181,7 @@ export class App {
                                                         attributes: [
                                                             { property: "name", value: `face-studio-face-side` },
                                                             { property: "data-target", value: CanvasUVHelper.SIDE_FRONT },
+                                                            { property: "value", value: CanvasUVHelper.SIDE_FRONT },
                                                         ],
                                                         events: [
                                                             { event: "click", handlers: [ this.UIMenuItemSideChangeEventHandler.bind(this) ] }
@@ -193,6 +195,7 @@ export class App {
                                                         attributes: [
                                                             { property: "name", value: `face-studio-face-side` },
                                                             { property: "data-target", value: CanvasUVHelper.SIDE_LEFT },
+                                                            { property: "value", value: CanvasUVHelper.SIDE_LEFT },
                                                         ],
                                                         events: [
                                                             { event: "click", handlers: [ this.UIMenuItemSideChangeEventHandler.bind(this) ] }
@@ -206,6 +209,7 @@ export class App {
                                                         attributes: [
                                                             { property: "name", value: `face-studio-face-side` },
                                                             { property: "data-target", value: CanvasUVHelper.SIDE_RIGHT },
+                                                            { property: "value", value: CanvasUVHelper.SIDE_RIGHT },
                                                         ],
                                                         events: [
                                                             { event: "click", handlers: [ this.UIMenuItemSideChangeEventHandler.bind(this) ] }
@@ -682,7 +686,15 @@ export class App {
     }
 
     UIMenuItemSaveSideMask() {
-        debugger;
+        const checkedSide = Array.from(document.getElementsByName("face-studio-face-side")).filter(btn => btn.checked)[0];
+        /** @type {number} */
+        const side = parseInt(checkedSide.getAttribute("data-target"));
+
+        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_IMAGE).ObtainMaskedArea(
+            side,
+            this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).GetDrawingPath(side)
+        );
+        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).ResetDrawingPath(side);
     }
 
     /**

@@ -16,8 +16,11 @@ export class CanvasPatternHelper extends CanvasDrawingHelper {
 
     onDrawingSide = false;
 
-    /** @type {Path2D[]} */
+    /** @type {Path2D[][]} */
     drawingSidePath;
+
+    /** @type {number} */
+    drawingSide = 0;
 
     constructor() {
         super();
@@ -48,10 +51,10 @@ export class CanvasPatternHelper extends CanvasDrawingHelper {
      * @constructor
      */
     DrawCallback(canvasDrawing) {
-        if(canvasDrawing.isAllowedPermanent) this.Draw(canvasDrawing.target);
+        if(canvasDrawing.isAllowedPermanent) this.Draw(canvasDrawing.target, true);
     }
 
-    Draw(layer) {
+    Draw(layer, save = false) {
         const startPos = this.startingPoint;
         const endPos = this.isInteractive ? this.currentPoint : this.endPoint;
         let deltaPos = [endPos.x-startPos.x, endPos.y-startPos.y];
@@ -148,7 +151,7 @@ export class CanvasPatternHelper extends CanvasDrawingHelper {
                 break;
         }
         currentPath.closePath();
-        if(this.onDrawingSide) this.drawingSidePath.push(currentPath);
+        if(this.onDrawingSide && save) this.drawingSidePath[this.drawingSide].push(currentPath);
 
         switch (this.drawingMode) {
             case CanvasPatternHelper.MODE_FILL:
@@ -206,7 +209,6 @@ export class CanvasPatternHelper extends CanvasDrawingHelper {
         }
         return available;
     }
-
     GetAvailablePath(pattern) {
         const available = [];
         switch (pattern) {
@@ -224,9 +226,25 @@ export class CanvasPatternHelper extends CanvasDrawingHelper {
         return available;
     }
 
+    /**
+     *
+     * @param {number} side
+     * @return {Path2D[]}
+     * @constructor
+     */
+    GetDrawingPath(side) {
+        return this.drawingSidePath[side];
+    }
+
     OnSideChange(side) {
-        this.drawingSidePath = [];
+        this.drawingSidePath[this.drawingSide] = [];
+        this.drawingSidePath[side] = [];
         this.onDrawingSide = true;
+        this.drawingSide = side;
+    }
+
+    ResetDrawingPath(side) {
+        this.drawingSidePath[side] = [];
     }
 
 

@@ -690,7 +690,7 @@ export class App {
         /** @type {number} */
         const side = parseInt(checkedSide.getAttribute("data-target"));
 
-        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_IMAGE).ObtainMaskedArea(
+        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_IMAGE).SetMaskedArea(
             side,
             this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).GetDrawingPath(side)
         );

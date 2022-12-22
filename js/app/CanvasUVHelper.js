@@ -64,7 +64,13 @@ export class CanvasUVHelper extends CanvasDrawingHelper {
 
     OnLayerUpdate(e) {
         if(this.uvMapData && this.shouldShowUVMapData) {
-            e.target.getContext("2d").drawImage(this.uvMapData, 0, 0, e.target.clientWidth, e.target.clientHeight);
+            this.uvMap.drawImage(this.uvMapData, 0, 0, e.target.clientWidth, e.target.clientHeight);
+
+            this.uvMap.drawImage(
+                this.ObtainMaskedArea(CanvasUVHelper.SIDE_FRONT, this.mask[CanvasUVHelper.SIDE_FRONT]),
+                0, 0,
+                this.uvMap.canvas.clientWidth, this.uvMap.canvas.clientHeight
+            );
         }
     }
 
@@ -105,15 +111,14 @@ export class CanvasUVHelper extends CanvasDrawingHelper {
     /**
      *
      * @param {number} side
-     * @param {CanvasRenderingContext2D} layer
      * @param {Path2D[]} mask
+     * @return {ImageData}
      * @constructor
      */
     ObtainMaskedArea(side, mask) {
-        this.mask[side] = mask;
-        document.layer = this.layers[side];
-        document.mask = mask;
-        document.image = this.bitmap[side];
+        const width = this.layers[side].canvas.clientWidth;
+        const height = this.layers[side].canvas.clientHeight;
+        this.layers[side].clearRect(0, 0, width, height);
 
         mask.forEach(mask => this.layers[side].fill(mask));
         this.layers[side].globalCompositeOperation = "source-in";
@@ -122,10 +127,70 @@ export class CanvasUVHelper extends CanvasDrawingHelper {
 
         this.layers[side].globalCompositeOperation = "source-over";
 
+        let maskedImageData = this.layers[side].getImageData(0, 0, width, height);
+        let chunkedMaskedImageData = [];
+        let chunkedSRGBMaskedImageData = [];
+        let reducedMaskedImageData = [];
+        for(let i = 0; i < height; i++)
+            chunkedMaskedImageData[i] = maskedImageData.data.slice((i * width * 4), (i * width * 4) + width * 4);
+        maskedImageData = []; // Clear memory...
+        for(let i = 0; i < height; i++) {
+            chunkedSRGBMaskedImageData[i] = [];
+            for(let j = 0; j < width; j++)
+                chunkedSRGBMaskedImageData[i][j] = chunkedMaskedImageData[i].slice(j * 4, (j * 4) + 4);
+        }
+        chunkedMaskedImageData = []; // Clear memory...
+        let top = -1;
+        let left = -1;
+        let right = -1;
+        let bottom = -1;
+
+        let shouldStop = false;
+        for(let i = 0; i < height && !shouldStop; i++) {
+            shouldStop = chunkedSRGBMaskedImageData[i].some(pixel => pixel.some(rgba => rgba != 0));
+            if(shouldStop) top = i;
+        }
+
+        shouldStop = false;
+        for(let i = height - 1; i >= 0 && !shouldStop; i--) {
+            shouldStop = chunkedSRGBMaskedImageData[i].some(pixel => pixel.some(rgba => rgba != 0));
+            if(shouldStop) bottom = i;
+        }
+
+        chunkedSRGBMaskedImageData.splice(bottom, height);
+        chunkedSRGBMaskedImageData.splice(0, top);
+
+        this.layers[side].clearRect(0, 0, width, height);
+
+        createImageBitmap(new ImageData(
+            Uint8ClampedArray.from(chunkedSRGBMaskedImageData
+                .flatMap(pixel =>
+                        pixel
+                            .flatMap(rgba =>
+                                [rgba[0], rgba[1], rgba[2], rgba[3]]
+                            )
+                )),
+                width,
+            bottom - top)
+        ).then(bitmap =>
+            this.layers[side].drawImage(bitmap, top, 0, this.layers[side].canvas.clientWidth, bottom)
+        );
+
+
+        debugger;
+
         // On move modify transform, and redraw to move the masked zone over??
     }
 
-
+    /**
+     *
+     * @param {number} side
+     * @param {Path2D[]} mask
+     * @constructor
+     */
+    SetMaskedArea(side, mask) {
+        this.mask[side] = mask;
+    }
 
     /**
      * EventHandlers on the case the utility should show a side.

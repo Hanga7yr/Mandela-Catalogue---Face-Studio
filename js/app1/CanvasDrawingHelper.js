@@ -1,4 +1,4 @@
-import { CanvasHelper } from "/js/app/CanvasHelper.js";
+import { CanvasHelper } from "/js/app1/CanvasHelper.js";
 
 export class CanvasDrawingHelper {
 
@@ -80,12 +80,13 @@ export class CanvasDrawingHelper {
     /**
      * Generates the layers needed to operate.
      * @param {number} layer
+     * @param {HTMLElement} parentElement
      * @returns {CanvasRenderingContext2D[]|CanvasRenderingContext2D}
      * @constructor
      */
-    GenerateLayers(layer) {
-        this.target = CanvasHelper.GenerateLayer(layer++);
-        this.buffer = CanvasHelper.GenerateLayer(layer++);
+    GenerateLayers(layer, parentElement) {
+        this.target = CanvasHelper.GenerateLayer(layer++, parentElement);
+        this.buffer = CanvasHelper.GenerateLayer(layer++, parentElement);
 
         return [this.target, this.buffer];
     }
@@ -306,4 +307,5 @@ export class CanvasDrawingHelper {
     static TYPE_PATTERN = 1;
     static TYPE_PATTERN_OUTLINE = 2;
     static TYPE_IMAGE = 3;
+    static TYPE_MOVING = 4;
 }

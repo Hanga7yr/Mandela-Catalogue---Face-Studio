@@ -1,8 +1,6 @@
-import { CanvasDrawingHelper } from "/js/app/CanvasDrawingHelper.js";
-import { CanvasHelper } from "/js/app/CanvasHelper.js";
+import {CanvasHelper } from "/js/Canvas/CanvasHelper.js";
 
-
-export class CanvasUVHelper extends CanvasDrawingHelper {
+export class CanvasUVHelper extends CanvasHelper {
     /**
      * Stores the data of the uvmap.
      * @type {ImageBitmap}
@@ -48,11 +46,11 @@ export class CanvasUVHelper extends CanvasDrawingHelper {
         });
     }
 
-    GenerateLayers(layer) {
-        this.uvMap = CanvasHelper.GenerateLayer(layer++);
-        this.layers[CanvasUVHelper.SIDE_FRONT] = CanvasHelper.GenerateLayer(layer++);
-        this.layers[CanvasUVHelper.SIDE_LEFT] = CanvasHelper.GenerateLayer(layer++);
-        this.layers[CanvasUVHelper.SIDE_RIGHT] = CanvasHelper.GenerateLayer(layer++);
+    Generate(currentLayer) {
+        this.uvMap = CanvasHelper.GenerateLayer(currentLayer++);
+        this.layers[CanvasUVHelper.SIDE_FRONT] = CanvasHelper.GenerateLayer(currentLayer++);
+        this.layers[CanvasUVHelper.SIDE_LEFT] = CanvasHelper.GenerateLayer(currentLayer++);
+        this.layers[CanvasUVHelper.SIDE_RIGHT] = CanvasHelper.GenerateLayer(currentLayer++);
 
         this.uvMap.canvas.addEventListener("change", this.OnLayerUpdate.bind(this));
         this.layers[CanvasUVHelper.SIDE_FRONT].canvas.setAttribute("data-target", CanvasUVHelper.SIDE_FRONT);
@@ -66,11 +64,7 @@ export class CanvasUVHelper extends CanvasDrawingHelper {
         if(this.uvMapData && this.shouldShowUVMapData) {
             this.uvMap.drawImage(this.uvMapData, 0, 0, e.target.clientWidth, e.target.clientHeight);
 
-            this.uvMap.drawImage(
-                this.ObtainMaskedArea(CanvasUVHelper.SIDE_FRONT, this.mask[CanvasUVHelper.SIDE_FRONT]),
-                0, 0,
-                this.uvMap.canvas.clientWidth, this.uvMap.canvas.clientHeight
-            );
+            this.ObtainMaskedArea(CanvasUVHelper.SIDE_FRONT, this.mask[CanvasUVHelper.SIDE_FRONT]);
         }
     }
 
@@ -162,6 +156,8 @@ export class CanvasUVHelper extends CanvasDrawingHelper {
 
         this.layers[side].clearRect(0, 0, width, height);
 
+        debugger;
+
         createImageBitmap(new ImageData(
             Uint8ClampedArray.from(chunkedSRGBMaskedImageData
                 .flatMap(pixel =>
@@ -173,11 +169,9 @@ export class CanvasUVHelper extends CanvasDrawingHelper {
                 width,
             bottom - top)
         ).then(bitmap =>
-            this.layers[side].drawImage(bitmap, top, 0, this.layers[side].canvas.clientWidth, bottom)
+            this.layers[side].drawImage(bitmap, 0, top, this.layers[side].canvas.clientWidth, bottom - top)
         );
 
-
-        debugger;
 
         // On move modify transform, and redraw to move the masked zone over??
     }

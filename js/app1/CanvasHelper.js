@@ -1,6 +1,7 @@
-import { CanvasDrawingHelper } from "/js/app/CanvasDrawingHelper.js";
-import { CanvasPatternHelper } from "/js/app/CanvasPatternHelper.js";
-import { CanvasUVHelper } from "/js/app/CanvasUVHelper.js";
+import { CanvasDrawingHelper } from "/js/app1/CanvasDrawingHelper.js";
+import { CanvasPatternHelper } from "/js/app1/CanvasPatternHelper.js";
+import { CanvasUVHelper } from "/js/app1/CanvasUVHelper.js";
+import {CanvasMovingHelper} from "/js/Canvas/CanvasMovingHelper.js";
 
 export class CanvasHelper {
 
@@ -85,11 +86,17 @@ export class CanvasHelper {
         patternOutlineHelper.drawingPattern = CanvasPatternHelper.PATTERN_RECT;
         patternOutlineHelper.drawingPath = CanvasPatternHelper.PATH_VERTEX;
 
+        const movingHelper = new CanvasMovingHelper();
+        this.AddOnGenerateLayersHandler(movingHelper.GenerateLayers.bind(movingHelper));
+        this.AddonMouseDownAndMoveHandler(movingHelper.MoveCorner.bind(movingHelper));
+        this.AddOnMouseUpHandler(movingHelper.DropCorner.bind(movingHelper));
+
         this.helpers[CanvasDrawingHelper.TYPE_PATTERN] = patternHelper;
         this.helpers[CanvasDrawingHelper.TYPE_IMAGE] = uvHelper;
         this.helpers[CanvasDrawingHelper.TYPE_PATTERN_OUTLINE] = patternOutlineHelper;
+        this.helpers[CanvasDrawingHelper.TYPE_MOVING] = movingHelper;
 
-        this.mouseMovingTimeout = setTimeout(this.CheckMouseMoving.bind(this), this.mouseMovingTimeoutDelay);
+        // this.mouseMovingTimeout = setTimeout(this.CheckMouseMoving.bind(this), this.mouseMovingTimeoutDelay);
     }
 
 
@@ -124,7 +131,7 @@ export class CanvasHelper {
         this.parentElement.classList.add("justify-content-center");
 
         this.onGenerateLayers.forEach((eventHandler) => {
-            const newLayers = eventHandler(this.currentLayerCount);
+            const newLayers = eventHandler(this.currentLayerCount, this.parentElement);
             if(newLayers){
                 if(Array.isArray(newLayers))
                     newLayers.forEach((layer) => this.layers.push(layer));
@@ -133,7 +140,7 @@ export class CanvasHelper {
             }
         });
 
-        const eventLayer = CanvasHelper.GenerateLayer(this.currentLayerCount < 10 ? 10 : 1000);
+        const eventLayer = CanvasHelper.GenerateLayer(CanvasHelper.TOP_ZINDEX);
         eventLayer?.canvas.addEventListener('mousemove', this.OnMouseMoveListener.bind(this));
         eventLayer?.canvas.addEventListener('mouseup', this.OnMouseUpListener.bind(this));
         eventLayer?.canvas.addEventListener('mousedown', this.OnMouseDownListener.bind(this));
@@ -176,10 +183,11 @@ export class CanvasHelper {
     /**
      * Generates a layer at a determined zIndex
      * @param zIndex Where in the stack should this layer be.
+     * @param parentElement The HTMLElement parent to all layers.
      * @returns {CanvasRenderingContext2D} The newly created layer.
      * @constructor
      */
-    static GenerateLayer(zIndex) {
+    static GenerateLayer(zIndex, parentElement) {
         const newCanvas = document.createElement("canvas");
 
         newCanvas.classList.add("position-absolute");
@@ -206,6 +214,12 @@ export class CanvasHelper {
     static MOUSE_DOWN = 3;
     static MOUSE_MOVE = 4;
 
+    /**
+     * The zIndex of the highest layer
+     * @type {number}
+     */
+    static TOP_ZINDEX = 1000;
+
 
     /**
      * Updated the state of the MouseMoving Event and stop the timeout.
@@ -227,7 +241,7 @@ export class CanvasHelper {
 
         if(!this.eventState.includes(CanvasHelper.MOUSE_MOVE))
             this.eventState.push(CanvasHelper.MOUSE_MOVE);
-        this.mouseMovingTimeout = setTimeout(this.CheckMouseMoving.bind(this), this.mouseMovingTimeoutDelay);
+        // this.mouseMovingTimeout = setTimeout(this.CheckMouseMoving.bind(this), this.mouseMovingTimeoutDelay);
 
         this.onMouseMove.forEach((eventHandler) => eventHandler(event, this));
 
@@ -245,6 +259,8 @@ export class CanvasHelper {
 
         if(!this.eventState.includes(CanvasHelper.MOUSE_UP))
             this.eventState.push(CanvasHelper.MOUSE_UP);
+        if(this.eventState.includes(CanvasHelper.MOUSE_MOVE))
+            this.eventState.splice(this.eventState.indexOf(CanvasHelper.MOUSE_MOVE), 1);
         if(this.eventState.includes(CanvasHelper.MOUSE_DOWN)) {
             this.eventState.splice(this.eventState.indexOf(CanvasHelper.MOUSE_DOWN));
             this.onMouseDownMoveAndUp.forEach(eventHandler => eventHandler(event, this));
@@ -264,7 +280,7 @@ export class CanvasHelper {
         if(!this.eventState.includes(CanvasHelper.MOUSE_DOWN))
             this.eventState.push(CanvasHelper.MOUSE_DOWN);
         if(this.eventState.includes(CanvasHelper.MOUSE_UP))
-            this.eventState.splice(this.eventState.indexOf(CanvasHelper.MOUSE_UP));
+            this.eventState.splice(this.eventState.indexOf(CanvasHelper.MOUSE_UP), 1);
 
         this.onMouseDown.forEach(eventHandler => eventHandler(event, this));
     }
@@ -280,7 +296,7 @@ export class CanvasHelper {
         if(!this.eventState.includes(CanvasHelper.MOUSE_ENTER))
             this.eventState.push(CanvasHelper.MOUSE_ENTER);
         if(this.eventState.includes(CanvasHelper.MOUSE_LEAVE))
-            this.eventState.splice(this.eventState.indexOf(CanvasHelper.MOUSE_LEAVE));
+            this.eventState.splice(this.eventState.indexOf(CanvasHelper.MOUSE_LEAVE), 1);
 
         this.onMouseEnter.forEach(eventHandler => eventHandler(event, this));
     }
@@ -296,7 +312,9 @@ export class CanvasHelper {
         if(!this.eventState.includes(CanvasHelper.MOUSE_LEAVE))
             this.eventState.push(CanvasHelper.MOUSE_LEAVE);
         if(this.eventState.includes(CanvasHelper.MOUSE_ENTER))
-            this.eventState.splice(this.eventState.indexOf(CanvasHelper.MOUSE_ENTER));
+            this.eventState.splice(this.eventState.indexOf(CanvasHelper.MOUSE_ENTER), 1);
+        if(this.eventState.includes(CanvasHelper.MOUSE_DOWN))
+            this.eventState.splice(this.eventState.indexOf(CanvasHelper.MOUSE_DOWN), 1);
 
         this.onMouseLeave.forEach(eventHandler => eventHandler(event, this));
     }
@@ -348,13 +366,13 @@ export class CanvasHelper {
 
     /**
      * EventHandlers on the state where layers are being generated.
-     * @type {Array<function(number):CanvasRenderingContext2D[]|CanvasRenderingContext2D>}
+     * @type {Array<function(number, HTMLElement):CanvasRenderingContext2D[]|CanvasRenderingContext2D>}
      */
     onGenerateLayers;
 
     /**
      * Adds a handler to the onGenerateLayers.
-     * @param {function(number):CanvasRenderingContext2D[]|CanvasRenderingContext2D} eventHandler
+     * @param {function(number, HTMLElement):CanvasRenderingContext2D[]|CanvasRenderingContext2D} eventHandler
      */
     AddOnGenerateLayersHandler(eventHandler) {
         if(!this.onGenerateLayers.includes(eventHandler))

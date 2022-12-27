@@ -29,7 +29,7 @@ export class UIHelper {
                 config.style
                     .filter((keyValue) => keyValue)
                     .filter((keyValue) => keyValue.hasOwnProperty("property") && keyValue.hasOwnProperty("value"))
-                    .filter((keyValue) => typeof keyValue.property === "string" && typeof keyValue.value === "string")
+                    .filter((keyValue) => typeof keyValue.property === "string")
                     .forEach((keyValue) => {
                         newObject.style.setProperty(keyValue.property, keyValue.value);
                     });
@@ -428,7 +428,7 @@ export class UIHelper {
                         }, document);
 
                         event.target.parentElement.parentElement.style.flexGrow = had == "1" ? "0" : "1";
-                        event.target.parentElement.parentElement.style.overflowY = "auto";
+                        event.target.parentElement.parentElement.style.overflowY = "overlay";
                     }]
                 };
                 if (!item instanceof HTMLElement){
@@ -446,7 +446,7 @@ export class UIHelper {
                 }
             });
             menuParent.firstElementChild.style.flexGrow = "1";
-            menuParent.firstElementChild.style.overflowY = "auto";
+            menuParent.firstElementChild.style.overflowY = "overlay";
             menuParent.firstElementChild.getElementsByClassName("accordion-button")[0].classList.remove("collapsed");
             menuParent.firstElementChild.getElementsByClassName("accordion-button")[0].setAttribute("aria-expanded", "true");
             menuParent.firstElementChild.getElementsByClassName("collapse")[0].classList.add("show");

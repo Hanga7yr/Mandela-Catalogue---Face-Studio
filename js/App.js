@@ -1,30 +1,11 @@
-import { ViewerHelper } from '/js/app/ViewerHelper.js';
-import { CanvasHelper } from "/js/app/CanvasHelper.js";
-7
-import { CanvasDrawingHelper } from "/js/app/CanvasDrawingHelper.js";
-import { CanvasPatternHelper } from "/js/app/CanvasPatternHelper.js";
-import { CanvasUVHelper } from "/js/app/CanvasUVHelper.js";
-import { UIHelper } from "/js/app/UIHelper.js";
+import { CanvasShapeHelper } from '/js/Canvas/CanvasShapeHelper.js';
+import { CanvasMovingHelper } from '/js/Canvas/CanvasMovingHelper.js';
+import { CanvasEventHelper } from '/js/Canvas/CanvasEventHelper.js';
+import { CanvasUVHelper } from '/js/Canvas/CanvasUVHelper.js';
+import { UIHelper } from '/js/UI/UIHelper.js';
+import { UIEventHelper } from '/js/UI/UIEventHelper.js';
 
 export class App {
-    /**
-     * Stores the CanvasHelper object. Maybe it should be a singleton but meh.
-     * @type {CanvasHelper}
-     */
-    canvasHelper;
-
-    /**
-     * Stores the ViewerHelper object.
-     * @type {ViewerHelper}
-     */
-    viewerHelper;
-
-    /**
-     * The parent element of the canvas.
-     * @type {HTMLElement}
-     */
-    canvasContainer = null;
-
 
     /**
      * @property {UIHelper.GenericElement}         [parent]
@@ -32,21 +13,21 @@ export class App {
      * @property {HTMLElement}                     [menu]
      * @property {UIHelper.GenericElement}         [control]
      */
-    ui;
-
+    uiConfig;
     /**
      * @type {UIHelper.GenericElement}
      */
-    content;
+    contentConfig;
 
-    constructor(props) {
-        this.canvasHelper = new CanvasHelper();
-        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).AddOnChangePatternEventHandler(this.UIMenuItemCanvasOptionPatternChange.bind(this));
-        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).AddOnDrawEventHandler(this.CanvasOnDraw.bind(this));
-        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_IMAGE).AddOnSideShowEventHandler(this.CanvasSideChangeEventHandler.bind(this));
-        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_IMAGE).AddOnSideShowEventHandler(
-            this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).OnSideChange.bind(this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN))
-        );
+    /** @type {CanvasShapeHelper} */
+    shapeHelper;
+    /** @type {CanvasEventHelper} */
+    eventHelper;
+    /** @type {UV} */
+    uvHelper;
+
+    constructor() {
+
 
         this.uiConfig = {};
         this.uiConfig.parent = {};
@@ -483,6 +464,11 @@ export class App {
         ];
     }
 
+
+    /**
+     * Used to generate the content of the app within the web page.
+     * @constructor
+     */
     Generate() {
         document.body.prepend(UIHelper.CreateOrUpdateElement({
             class: ["container"],
@@ -508,217 +494,6 @@ export class App {
         this.canvasHelper.UpdateLayers();
         this.viewerHelper.Animate();
     }
-
-    UIControlClickHandler(e) {
-        const uiContainer = document.getElementById("ui-menu");
-        const contentContainer = document.getElementById("content");
-
-        bootstrap.Collapse.getOrCreateInstance(document.getElementById("ui-menu"), {toggle: false}).toggle();
-
-        if(uiContainer.classList.contains("col-4")) {
-            uiContainer.classList.add("col-1");
-            uiContainer.classList.remove("col-4");
-        } else {
-            uiContainer.classList.add("col-4");
-            uiContainer.classList.remove("col-1");
-        }
-
-        if(contentContainer.classList.contains("col-8")) {
-            contentContainer.classList.add("col-11");
-            contentContainer.classList.remove("col-8");
-        }else {
-            contentContainer.classList.add("col-8");
-            contentContainer.classList.remove("col-11");
-        }
-
-        this.canvasHelper.UpdateLayers();
-        this.viewerHelper.UpdateViewer();
-    }
-    UIMenuItemFileInputClickHandler(e) {
-        document.getElementById("ui-menu-canvas").scrollIntoView(true);
-        const side = parseInt(e.target.getAttribute("data-target"));
-
-        createImageBitmap(e.target.previousElementSibling.files[0])
-            .then((fileImageBitmap) => {
-                document.getElementById("canvas-img-prev-input").src = URL.createObjectURL(e.target.previousElementSibling.files[0]);
-
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_IMAGE).SetSideImageData(side, fileImageBitmap);
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_IMAGE).ShowSide(side);
-
-                this.UIMenuItemToggleImagePreview(true);
-            });
-    }
-
-
-    /**
-     *
-     * @param {number} pattern
-     * @param {number[]} modeAvailable
-     * @param {number[]} pathAvailable
-     * @constructor
-     */
-    UIMenuItemCanvasOptionPatternChange(pattern, modeAvailable, pathAvailable) {
-        if(modeAvailable && Array.isArray(modeAvailable)) {
-            CanvasPatternHelper
-                .MODES
-                .map((mode) => document.getElementById(`canvas-${CanvasPatternHelper.MODE}-${mode}`))
-                .forEach((option) => {
-                    option.setAttribute("disabled", "");
-                    option.parentElement.querySelector(`[for='${option.getAttribute("id")}']`).classList.add("btn-danger");
-                });
-            CanvasPatternHelper
-                .MODES
-                .filter((mode) => modeAvailable.includes(mode))
-                .map((mode) => document.getElementById(`canvas-${CanvasPatternHelper.MODE}-${mode}`))
-                .forEach((option) => {
-                    option.removeAttribute("disabled");
-                    option.parentElement.querySelector(`[for='${option.getAttribute("id")}']`).classList.remove("btn-danger");
-                    option.parentElement.firstElementChild.click();
-                });
-        }
-
-        if(pathAvailable && Array.isArray(pathAvailable)) {
-            CanvasPatternHelper
-                .PATHS
-                .map((path) => document.getElementById(`canvas-${CanvasPatternHelper.PATH}-${path}`))
-                .forEach((option) => {
-                    option.setAttribute("disabled", "");
-                    option.parentElement.querySelector(`[for='${option.getAttribute("id")}']`).classList.add("btn-danger");
-                });
-
-            CanvasPatternHelper
-                .PATHS
-                .filter((path) => pathAvailable.includes(path))
-                .map((path) => document.getElementById(`canvas-${CanvasPatternHelper.PATH}-${path}`))
-                .forEach((option) => {
-                    option.removeAttribute("disabled");
-                    option.parentElement.querySelector(`[for='${option.getAttribute("id")}']`).classList.remove("btn-danger");
-                    option.parentElement.firstElementChild.click();
-                });
-        }
-
-        switch (pattern) {
-            case CanvasPatternHelper.PATTERN_CIRCLE:
-            case CanvasPatternHelper.PATTERN_ELLIPSE:
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN_OUTLINE).shouldDraw = true;
-                break;
-            case CanvasPatternHelper.PATTERN_IMAGE:
-            default:
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN_OUTLINE).shouldDraw = false;
-                break;
-        }
-    }
-
-    UIMenuItemToggleImagePreview(shouldShow = false) {
-        if(shouldShow) {
-            document.getElementById("ui-menu-canvas").querySelector("#canvas-img-prev").classList.remove("d-none");
-        } else {
-            document.getElementById("ui-menu-canvas").querySelector("#canvas-img-prev").classList.add("d-none");
-        }
-    }
-    UIMenuItemCanvasOptionChangeHandler(e) {
-        const option = parseInt(e.target.getAttribute("data-drawing-target"));
-        const value = parseInt(e.target.getAttribute("data-drawing-value"));
-        switch (option) {
-            case CanvasPatternHelper.PATTERN:
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).ChangePattern(value);
-                break;
-            case CanvasPatternHelper.MODE:
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).ChangeMode(value);
-                break;
-            case CanvasPatternHelper.PATH:
-                this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).ChangePath(value);
-                break;
-        }
-    }
-
-    UIMenuItemToggleContentClickHandler(e) {
-        const viewerContainer = document.getElementById("viewer-container");
-        const canvasContainer = document.getElementById("canvas-container");
-
-        if(e.target.getAttribute("data-target").includes('canvas')) {
-            viewerContainer.classList.add("d-none");
-            canvasContainer.classList.remove("d-none");
-
-            viewerContainer.setAttribute("data-need-refresh", "true");
-
-            if(canvasContainer.getAttribute("data-need-refresh") == "true") {
-                canvasContainer.setAttribute("data-need-refresh", "false");
-                this.canvasHelper.UpdateLayers();
-            }
-        } else {
-            viewerContainer.classList.remove("d-none");
-            canvasContainer.classList.add("d-none");
-
-            canvasContainer.setAttribute("data-need-refresh", "true");
-
-            if(viewerContainer.getAttribute("data-need-refresh") == "true") {
-                viewerContainer.setAttribute("data-need-refresh", "true");
-                this.viewerHelper.UpdateViewer();
-            }
-        }
-    }
-
-    UIMenuItemClearContentClickHandler(e) {
-        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_IMAGE).ToggleShowUVMapping(false);
-        this.canvasHelper.UpdateLayers();
-        this.UIMenuItemToggleImagePreview(false);
-        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_IMAGE).ShowSide(-1);
-    }
-    UIMenuItemImagePrevAsContentClickHandler(e) {
-        document.getElementById("canvas-img-prev-input");
-    }
-
-    UIMenuItemSideChangeEventHandler(e) {
-        this.canvasHelper.UpdateLayers();
-        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_IMAGE).ShowSide(parseInt(e.target.getAttribute("data-target")));
-    }
-
-    CanvasSideChangeEventHandler(side) {
-        if (side != 0) {
-            document.getElementById(`canvas-side-${side}`).click();
-
-            const button = document.getElementById("canvas-side-btn");
-            button.classList.add("btn-danger");
-            button.classList.remove("btn-success");
-            button.setAttribute("disabled", "");
-        }
-    }
-
-    UIMenuItemSaveSideMask() {
-        const checkedSide = Array.from(document.getElementsByName("face-studio-face-side")).filter(btn => btn.checked)[0];
-        /** @type {number} */
-        const side = parseInt(checkedSide.getAttribute("data-target"));
-
-        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_IMAGE).SetMaskedArea(
-            side,
-            this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).GetDrawingPath(side)
-        );
-        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_PATTERN).ResetDrawingPath(side);
-    }
-
-    /**
-     * How to react to drawing callbacks
-     * @param {CanvasPatternHelper} canvasDrawing
-     * @constructor
-     */
-    CanvasOnDraw(canvasDrawing) {
-        if(canvasDrawing.onDrawingSide
-            && canvasDrawing.drawingPath != CanvasPatternHelper.PATH_NONE
-            && canvasDrawing.drawingMode != CanvasPatternHelper.MODE_NONE
-            && canvasDrawing.drawingPattern != CanvasPatternHelper.PATTERN_NONE) {
-            const button = document.getElementById("canvas-side-btn");
-            button.classList.remove("btn-danger");
-            button.classList.add("btn-success");
-            button.removeAttribute("disabled");
-        }
-    }
-
-    CanvasToggleUVEventHandler(e) {
-        this.canvasHelper.GetHelper(CanvasDrawingHelper.TYPE_IMAGE).ToggleShowUVMapping();
-        this.canvasHelper.UpdateLayers();
-    }
 }
 
-export const app = new App();
-app.Generate();
+new App().Generate();
